@@ -1,4 +1,4 @@
-OUT = BMAC
+OUT = MAL
 CC := clang
 TARGET := x86_64-pc-windows-gnu
 SDL_TARGET := x86_64-w64-mingw32
