@@ -345,7 +345,6 @@ bool HasWindowFocus = false;
 bool currentKeyboardState[KEYBOARD_KEYS];
 bool lastKeyboardState[KEYBOARD_KEYS];
 
-/* TODO: Load from config instead of being hardcoded */
 struct Keybindings TEST
 	= { .keycodes = { VK_F1 }, .buttons = { SDL_CONTROLLERBUTTON_INVALID } };
 struct Keybindings SERVICE
@@ -936,6 +935,7 @@ ControllerAxisIsReleased (enum SDLAxis axis)
 	return ControllerAxisIsUp (axis) && ControllerAxisWasDown (axis);
 }
 
+/* TODO: Fix whatever is causing crashes when this isnt commented */
 void
 UpdateTouch ()
 {
@@ -1104,6 +1104,7 @@ GetButtonsState (bool (*buttonTestFunc) (struct Keybindings))
 	return buttons;
 }
 
+/* TODO: Make holds work */
 void
 UpdateInput ()
 {
@@ -1116,9 +1117,8 @@ UpdateInput ()
 	inputState->Tapped.Buttons = GetButtonsState (IsButtonTapped);
 	inputState->Released.Buttons = GetButtonsState (IsButtonTapped);
 	inputState->Down.Buttons = GetButtonsState (IsButtonTapped);
-
-	if ((lastInputState &= inputState->Tapped.Buttons) != 0)
-		inputState->Down.Buttons ^= inputState->Tapped.Buttons;
+	inputState->DoubleTapped.Buttons = GetButtonsState (IsButtonTapped);
+	inputState->IntervalTapped.Buttons = GetButtonsState (IsButtonTapped);
 
 	EmulateSliderInput (LEFT_LEFT, LEFT_RIGHT, &ContactPoints[0], 0.0f, 0.5f);
 	EmulateSliderInput (RIGHT_LEFT, RIGHT_RIGHT, &ContactPoints[1],
