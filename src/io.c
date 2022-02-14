@@ -985,7 +985,7 @@ GetInternalButtonState (struct Keybindings bindings)
 		}
 	for (int i = 0; i < COUNTOFARR (ConfigControllerAXIS); i++)
 		{
-			if (bindings.axis[i] == -1)
+			if (bindings.axis[i] == 0)
 				continue;
 			if (ControllerAxisIsReleased (bindings.axis[i]))
 				buttons.Released = 1;
