@@ -251,8 +251,8 @@ struct
 	{ "SDL_MISC", SDL_CONTROLLERBUTTON_MISC1 },
 	{ "SDL_PADDLE1", SDL_CONTROLLERBUTTON_PADDLE1 },
 	{ "SDL_PADDLE2", SDL_CONTROLLERBUTTON_PADDLE2 },
-	{ "SDL_PADDLE2", SDL_CONTROLLERBUTTON_PADDLE3 },
-	{ "SDL_PADDLE3", SDL_CONTROLLERBUTTON_PADDLE4 },
+	{ "SDL_PADDLE3", SDL_CONTROLLERBUTTON_PADDLE3 },
+	{ "SDL_PADDLE4", SDL_CONTROLLERBUTTON_PADDLE4 },
 	{ "SDL_TOUCHPAD", SDL_CONTROLLERBUTTON_TOUCHPAD },
 };
 
@@ -372,6 +372,8 @@ struct Keybindings RIGHT_LEFT
 struct Keybindings RIGHT_RIGHT
 	= { .keycodes = { 'O' }, .axis = { SDL_AXIS_RIGHT_RIGHT } };
 
+SDL_Window *window;
+
 char *
 configPath (char *name)
 {
@@ -476,11 +478,11 @@ InitializeIO (HWND DivaWindowHandle)
 				}
 		}
 
-	SDL_Window *window = SDL_CreateWindowFrom (DivaWindowHandle);
-	if (window == NULL)
-		printf ("SDL Error: %s\n", SDL_GetError ());
-	else
+	window = SDL_CreateWindowFrom (DivaWindowHandle);
+	if (window != NULL)
 		SDL_SetWindowResizable (window, true);
+	else
+		printf ("SDL Error: %s\n", SDL_GetError ());
 
 	sliderState = (struct TouchSliderState *)SLIDER_CTRL_TASK_ADDRESS;
 	inputState
@@ -494,6 +496,7 @@ InitializeIO (HWND DivaWindowHandle)
 void
 DiposeIO ()
 {
+	SDL_DestroyWindow (window);
 	SDL_Quit ();
 }
 
@@ -1077,7 +1080,7 @@ EmulateSliderInput (struct Keybindings left, struct Keybindings right,
 enum JvsButtons
 GetButtonsState (bool (*buttonTestFunc) (struct Keybindings))
 {
-	enum JvsButtons buttons = JVS_NONE;
+	enum JvsButtons buttons = { 0 };
 
 	if (buttonTestFunc (TEST))
 		buttons |= JVS_TEST;
@@ -1119,6 +1122,9 @@ UpdateInput ()
 	inputState->Down.Buttons = GetButtonsState (IsButtonTapped);
 	inputState->DoubleTapped.Buttons = GetButtonsState (IsButtonTapped);
 	inputState->IntervalTapped.Buttons = GetButtonsState (IsButtonTapped);
+
+	if ((lastInputState &= inputState->Tapped.Buttons) != 0)
+		inputState->Down.Buttons ^= inputState->Tapped.Buttons;
 
 	EmulateSliderInput (LEFT_LEFT, LEFT_RIGHT, &ContactPoints[0], 0.0f, 0.5f);
 	EmulateSliderInput (RIGHT_LEFT, RIGHT_RIGHT, &ContactPoints[1],
