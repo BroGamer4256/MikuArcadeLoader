@@ -23,12 +23,6 @@ bool KeyboardWasDown (BYTE keycode);
 bool KeyboardWasUp (BYTE keycode);
 
 void PollSDLInput ();
-bool ControllerButtonIsDown (SDL_GameControllerButton button);
-bool ControllerButtonIsUp (SDL_GameControllerButton button);
-bool ControllerButtonWasDown (SDL_GameControllerButton button);
-bool ControllerButtonWasUp (SDL_GameControllerButton button);
-bool ControllerButtonIsTapped (SDL_GameControllerButton button);
-bool ControllerButtonIsReleased (SDL_GameControllerButton button);
 
 void UpdateTouch ();
 void UpdateTouchUnfocused ();
@@ -207,32 +201,59 @@ struct
 	{ "ENTER", VK_RETURN },
 };
 
+enum SDL_GameController_Button
+{
+	SDL_CONTROLLERBUTTON_INVALID,
+	SDL_CONTROLLERBUTTON_A,
+	SDL_CONTROLLERBUTTON_B,
+	SDL_CONTROLLERBUTTON_X,
+	SDL_CONTROLLERBUTTON_Y,
+	SDL_CONTROLLERBUTTON_BACK,
+	SDL_CONTROLLERBUTTON_GUIDE,
+	SDL_CONTROLLERBUTTON_START,
+	SDL_CONTROLLERBUTTON_LEFTSTICK,
+	SDL_CONTROLLERBUTTON_RIGHTSTICK,
+	SDL_CONTROLLERBUTTON_LEFTSHOULDER,
+	SDL_CONTROLLERBUTTON_RIGHTSHOULDER,
+	SDL_CONTROLLERBUTTON_DPAD_UP,
+	SDL_CONTROLLERBUTTON_DPAD_DOWN,
+	SDL_CONTROLLERBUTTON_DPAD_LEFT,
+	SDL_CONTROLLERBUTTON_DPAD_RIGHT,
+	SDL_CONTROLLERBUTTON_MISC1,
+	SDL_CONTROLLERBUTTON_PADDLE1,
+	SDL_CONTROLLERBUTTON_PADDLE2,
+	SDL_CONTROLLERBUTTON_PADDLE3,
+	SDL_CONTROLLERBUTTON_PADDLE4,
+	SDL_CONTROLLERBUTTON_TOUCHPAD,
+	SDL_CONTROLLERBUTTON_MAX
+};
+
 struct
 {
 	const char *string;
-	SDL_GameControllerButton button;
+	enum SDL_GameController_Button button;
 } ConfigControllerButtons[] = {
-	{ "SDL_A", SDL_CONTROLLER_BUTTON_A },
-	{ "SDL_B", SDL_CONTROLLER_BUTTON_B },
-	{ "SDL_X", SDL_CONTROLLER_BUTTON_X },
-	{ "SDL_Y", SDL_CONTROLLER_BUTTON_Y },
-	{ "SDL_BACK", SDL_CONTROLLER_BUTTON_BACK },
-	{ "SDL_GUIDE", SDL_CONTROLLER_BUTTON_GUIDE },
-	{ "SDL_START", SDL_CONTROLLER_BUTTON_START },
-	{ "SDL_LSTICK_PRESS", SDL_CONTROLLER_BUTTON_LEFTSTICK },
-	{ "SDL_RSTICK_PRESS", SDL_CONTROLLER_BUTTON_RIGHTSTICK },
-	{ "SDL_LSHOULDER", SDL_CONTROLLER_BUTTON_LEFTSHOULDER },
-	{ "SDL_RSHOULDER", SDL_CONTROLLER_BUTTON_RIGHTSHOULDER },
-	{ "SDL_DPAD_UP", SDL_CONTROLLER_BUTTON_DPAD_UP },
-	{ "SDL_DPAD_DOWN", SDL_CONTROLLER_BUTTON_DPAD_DOWN },
-	{ "SDL_DPAD_LEFT", SDL_CONTROLLER_BUTTON_DPAD_LEFT },
-	{ "SDL_DPAD_RIGHT", SDL_CONTROLLER_BUTTON_DPAD_RIGHT },
-	{ "SDL_MISC", SDL_CONTROLLER_BUTTON_MISC1 },
-	{ "SDL_PADDLE1", SDL_CONTROLLER_BUTTON_PADDLE1 },
-	{ "SDL_PADDLE2", SDL_CONTROLLER_BUTTON_PADDLE2 },
-	{ "SDL_PADDLE2", SDL_CONTROLLER_BUTTON_PADDLE3 },
-	{ "SDL_PADDLE3", SDL_CONTROLLER_BUTTON_PADDLE4 },
-	{ "SDL_TOUCHPAD", SDL_CONTROLLER_BUTTON_TOUCHPAD },
+	{ "SDL_A", SDL_CONTROLLERBUTTON_A },
+	{ "SDL_B", SDL_CONTROLLERBUTTON_B },
+	{ "SDL_X", SDL_CONTROLLERBUTTON_X },
+	{ "SDL_Y", SDL_CONTROLLERBUTTON_Y },
+	{ "SDL_BACK", SDL_CONTROLLERBUTTON_BACK },
+	{ "SDL_GUIDE", SDL_CONTROLLERBUTTON_GUIDE },
+	{ "SDL_START", SDL_CONTROLLERBUTTON_START },
+	{ "SDL_LSTICK_PRESS", SDL_CONTROLLERBUTTON_LEFTSTICK },
+	{ "SDL_RSTICK_PRESS", SDL_CONTROLLERBUTTON_RIGHTSTICK },
+	{ "SDL_LSHOULDER", SDL_CONTROLLERBUTTON_LEFTSHOULDER },
+	{ "SDL_RSHOULDER", SDL_CONTROLLERBUTTON_RIGHTSHOULDER },
+	{ "SDL_DPAD_UP", SDL_CONTROLLERBUTTON_DPAD_UP },
+	{ "SDL_DPAD_DOWN", SDL_CONTROLLERBUTTON_DPAD_DOWN },
+	{ "SDL_DPAD_LEFT", SDL_CONTROLLERBUTTON_DPAD_LEFT },
+	{ "SDL_DPAD_RIGHT", SDL_CONTROLLERBUTTON_DPAD_RIGHT },
+	{ "SDL_MISC", SDL_CONTROLLERBUTTON_MISC1 },
+	{ "SDL_PADDLE1", SDL_CONTROLLERBUTTON_PADDLE1 },
+	{ "SDL_PADDLE2", SDL_CONTROLLERBUTTON_PADDLE2 },
+	{ "SDL_PADDLE2", SDL_CONTROLLERBUTTON_PADDLE3 },
+	{ "SDL_PADDLE3", SDL_CONTROLLERBUTTON_PADDLE4 },
+	{ "SDL_TOUCHPAD", SDL_CONTROLLERBUTTON_TOUCHPAD },
 };
 
 struct
@@ -241,13 +262,13 @@ struct
 	enum SDLAxis axis;
 } ConfigControllerAXIS[] = {
 	{ "SDL_LSTICK_LEFT", SDL_AXIS_LEFT_LEFT },
-	{ "SDL_LSTICK_UP", SDL_AXIS_LEFT_RIGHT },
-	{ "SDL_LSITCK_DOWN", SDL_AXIS_LEFT_UP },
-	{ "SDL_LSITCK_RIGHT", SDL_AXIS_LEFT_DOWN },
+	{ "SDL_LSTICK_UP", SDL_AXIS_LEFT_UP },
+	{ "SDL_LSTICK_DOWN", SDL_AXIS_LEFT_DOWN },
+	{ "SDL_LSTICK_RIGHT", SDL_AXIS_LEFT_RIGHT },
 	{ "SDL_RSTICK_LEFT", SDL_AXIS_RIGHT_LEFT },
-	{ "SDL_RSTICK_UP", SDL_AXIS_RIGHT_RIGHT },
-	{ "SDL_RSTICK_DOWN", SDL_AXIS_RIGHT_UP },
-	{ "SDL_RSTICK_RIGHT", SDL_AXIS_RIGHT_DOWN },
+	{ "SDL_RSTICK_UP", SDL_AXIS_RIGHT_UP },
+	{ "SDL_RSTICK_DOWN", SDL_AXIS_RIGHT_DOWN },
+	{ "SDL_RSTICK_RIGHT", SDL_AXIS_RIGHT_RIGHT },
 	{ "SDL_LTRIGGER", SDL_AXIS_LTRIGGER_DOWN },
 	{ "SDL_RTRIGGER", SDL_AXIS_RTRIGGER_DOWN },
 };
@@ -255,7 +276,8 @@ struct
 struct Keybindings
 {
 	BYTE keycodes[COUNTOFARR (ConfigKeyboardButtons)];
-	SDL_GameControllerButton buttons[COUNTOFARR (ConfigControllerButtons)];
+	enum SDL_GameController_Button
+		buttons[COUNTOFARR (ConfigControllerButtons)];
 	enum SDLAxis axis[COUNTOFARR (ConfigControllerAXIS)];
 };
 
@@ -271,7 +293,7 @@ struct ConfigValue
 {
 	enum EnumType type;
 	BYTE keycode;
-	SDL_GameControllerButton button;
+	enum SDL_GameController_Button button;
 	enum SDLAxis axis;
 };
 
@@ -325,24 +347,23 @@ bool lastKeyboardState[KEYBOARD_KEYS];
 
 /* TODO: Load from config instead of being hardcoded */
 struct Keybindings TEST
-	= { .keycodes = { VK_F1 }, .buttons = { SDL_CONTROLLER_BUTTON_INVALID } };
+	= { .keycodes = { VK_F1 }, .buttons = { SDL_CONTROLLERBUTTON_INVALID } };
 struct Keybindings SERVICE
-	= { .keycodes = { VK_F2 }, .buttons = { SDL_CONTROLLER_BUTTON_INVALID } };
-struct Keybindings START = { .keycodes = { VK_RETURN },
-							 .buttons = { SDL_CONTROLLER_BUTTON_START } };
-struct Keybindings TRIANGLE = { .keycodes = { 'W', 'I' },
-								.buttons = { SDL_CONTROLLER_BUTTON_Y,
-											 SDL_CONTROLLER_BUTTON_DPAD_UP } };
+	= { .keycodes = { VK_F2 }, .buttons = { SDL_CONTROLLERBUTTON_INVALID } };
+struct Keybindings START
+	= { .keycodes = { VK_RETURN }, .buttons = { SDL_CONTROLLERBUTTON_START } };
+struct Keybindings TRIANGLE
+	= { .keycodes = { 'W', 'I' },
+		.buttons = { SDL_CONTROLLERBUTTON_Y, SDL_CONTROLLERBUTTON_DPAD_UP } };
 struct Keybindings SQUARE = { .keycodes = { 'A', 'J' },
-							  .buttons = { SDL_CONTROLLER_BUTTON_X,
-										   SDL_CONTROLLER_BUTTON_DPAD_LEFT } };
+							  .buttons = { SDL_CONTROLLERBUTTON_X,
+										   SDL_CONTROLLERBUTTON_DPAD_LEFT } };
 struct Keybindings CROSS = { .keycodes = { 'S', 'K' },
-							 .buttons = { SDL_CONTROLLER_BUTTON_B,
-										  SDL_CONTROLLER_BUTTON_DPAD_DOWN } };
-struct Keybindings CIRCLE
-	= { .keycodes = { 'D', 'L' },
-		.buttons
-		= { SDL_CONTROLLER_BUTTON_A, SDL_CONTROLLER_BUTTON_DPAD_RIGHT } };
+							 .buttons = { SDL_CONTROLLERBUTTON_A,
+										  SDL_CONTROLLERBUTTON_DPAD_DOWN } };
+struct Keybindings CIRCLE = { .keycodes = { 'D', 'L' },
+							  .buttons = { SDL_CONTROLLERBUTTON_B,
+										   SDL_CONTROLLERBUTTON_DPAD_RIGHT } };
 struct Keybindings LEFT_LEFT
 	= { .keycodes = { 'Q' }, .axis = { SDL_AXIS_LEFT_LEFT } };
 struct Keybindings LEFT_RIGHT
@@ -443,6 +464,18 @@ InitializeIO (HWND DivaWindowHandle)
 		== -1)
 		printf ("Cannot read plugins/gamecontrollerdb.txt\nControllers Will "
 				"not Work\n");
+	SDL_GameControllerEventState (SDL_ENABLE);
+
+	for (int i = 0; i < SDL_NumJoysticks (); ++i)
+		{
+			if (SDL_IsGameController (i))
+				{
+					if (!SDL_GameControllerOpen (i))
+						printf ("Could not open gamecontroller %i: %s\n",
+								SDL_GameControllerNameForIndex (i),
+								SDL_GetError ());
+				}
+		}
 
 	SDL_Window *window = SDL_CreateWindowFrom (DivaWindowHandle);
 	if (window == NULL)
@@ -619,7 +652,7 @@ PollMouseInput (HWND DivaWindowHandle)
 	if ((fbWidth != gameWidth) && (fbHeight != gameHeight))
 		{
 			float scale;
-			float xoffset = ((float)16 / (float)9) * hWindow.bottom;
+			float xoffset = (16.0f / 9.0f) * hWindow.bottom;
 			if (xoffset != hWindow.right)
 				{
 					scale = xoffset / hWindow.right;
@@ -691,8 +724,8 @@ KeyboardWasUp (BYTE keycode)
 }
 
 int deadzone = 8000;
-bool currentControllerButtonsState[SDL_CONTROLLER_BUTTON_MAX];
-bool lastControllerButtonsState[SDL_CONTROLLER_BUTTON_MAX];
+bool currentControllerButtonsState[SDL_CONTROLLERBUTTON_MAX];
+bool lastControllerButtonsState[SDL_CONTROLLERBUTTON_MAX];
 struct SDLAxisState currentControllerAxisState;
 struct SDLAxisState lastControllerAxisState;
 
@@ -700,14 +733,26 @@ void
 PollSDLInput ()
 {
 	memcpy (lastControllerButtonsState, currentControllerButtonsState,
-			SDL_CONTROLLER_BUTTON_MAX);
+			SDL_CONTROLLERBUTTON_MAX);
 	lastControllerAxisState = currentControllerAxisState;
+	memset (&currentControllerAxisState, 0,
+			sizeof (currentControllerAxisState));
 
 	SDL_Event event;
 	while (SDL_PollEvent (&event) != 0)
 		{
 			switch (event.type)
 				{
+				case SDL_CONTROLLERDEVICEADDED:
+					if (SDL_IsGameController (event.cdevice.which))
+						{
+							if (!SDL_GameControllerOpen (event.cdevice.which))
+								printf (
+									"Could not open gamecontroller %i: %s\n",
+									SDL_GameControllerNameForIndex (
+										event.cdevice.which),
+									SDL_GetError ());
+						}
 				case SDL_MOUSEWHEEL:
 					if (event.wheel.y > 0)
 						IsMouseScrollUp = true;
@@ -716,7 +761,7 @@ PollSDLInput ()
 					break;
 				case SDL_CONTROLLERBUTTONUP:
 				case SDL_CONTROLLERBUTTONDOWN:
-					currentControllerButtonsState[event.cbutton.button]
+					currentControllerButtonsState[event.cbutton.button + 1]
 						= event.cbutton.state;
 					break;
 				case SDL_CONTROLLERAXISMOTION:
@@ -770,37 +815,37 @@ PollSDLInput ()
 }
 
 inline bool
-ControllerButtonIsDown (SDL_GameControllerButton button)
+ControllerButtonIsDown (enum SDL_GameController_Button button)
 {
 	return currentControllerButtonsState[button];
 }
 
 inline bool
-ControllerButtonIsUp (SDL_GameControllerButton button)
+ControllerButtonIsUp (enum SDL_GameController_Button button)
 {
 	return !ControllerButtonIsDown (button);
 }
 
 inline bool
-ControllerButtonWasDown (SDL_GameControllerButton button)
+ControllerButtonWasDown (enum SDL_GameController_Button button)
 {
 	return lastControllerButtonsState[button];
 }
 
 inline bool
-ControllerButtonWasUp (SDL_GameControllerButton button)
+ControllerButtonWasUp (enum SDL_GameController_Button button)
 {
 	return !ControllerButtonWasDown (button);
 }
 
 inline bool
-ControllerButtonIsTapped (SDL_GameControllerButton button)
+ControllerButtonIsTapped (enum SDL_GameController_Button button)
 {
 	return ControllerButtonIsDown (button) && ControllerButtonWasUp (button);
 }
 
 inline bool
-ControllerButtonIsReleased (SDL_GameControllerButton button)
+ControllerButtonIsReleased (enum SDL_GameController_Button button)
 {
 	return ControllerButtonIsUp (button) && ControllerButtonWasDown (button);
 }
@@ -898,10 +943,12 @@ UpdateTouch ()
 	currentTouchPanelState->XPosition = (float)pos.x;
 	currentTouchPanelState->YPosition = (float)pos.y;
 
+	/*
 	currentTouchPanelState->ContactType
-		= (KeyboardIsDown (VK_LBUTTON)		 ? 0x2
-		   : KeyboardIsReleased (VK_LBUTTON) ? 0x1
-											 : 0x0);
+		= (KeyboardIsDown (VK_LBUTTON)		 ? 2
+		   : KeyboardIsReleased (VK_LBUTTON) ? 1
+											 : 0);
+	*/
 	currentTouchPanelState->Pressure
 		= (float)(currentTouchPanelState->ContactType != 0);
 }
@@ -938,7 +985,7 @@ GetInternalButtonState (struct Keybindings bindings)
 		}
 	for (int i = 0; i < COUNTOFARR (ConfigControllerAXIS); i++)
 		{
-			if (bindings.axis[i] == 0)
+			if (bindings.axis[i] == -1)
 				continue;
 			if (ControllerAxisIsReleased (bindings.axis[i]))
 				buttons.Released = 1;
@@ -1073,9 +1120,9 @@ UpdateInput ()
 	if ((lastInputState &= inputState->Tapped.Buttons) != 0)
 		inputState->Down.Buttons ^= inputState->Tapped.Buttons;
 
-	EmulateSliderInput (LEFT_LEFT, RIGHT_RIGHT, &ContactPoints[0], 0.0f, 0.5f);
-	EmulateSliderInput (RIGHT_LEFT, RIGHT_RIGHT, &ContactPoints[1], 0.5f,
-						1.0f);
+	EmulateSliderInput (LEFT_LEFT, LEFT_RIGHT, &ContactPoints[0], 0.0f, 0.5f);
+	EmulateSliderInput (RIGHT_LEFT, RIGHT_RIGHT, &ContactPoints[1],
+						0.5f + sensorStep, 1.0f + sensorStep);
 
 	for (int i = 0; i < SLIDER_SENSORS; i++)
 		SetSensor (i, SLIDER_NO_PRESSURE);

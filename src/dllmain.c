@@ -84,7 +84,7 @@ ApplyPatches ()
 	/* Write ram files to the current directory instead of Y:/SBZV/ram */
 	WRITE_MEMORY (0x14066CF09, uint8_t, 0xE9, 0xD8, 0x00);
 	/* Change mdata path from "C:/Mount/Option" to "mdata/" */
-	WRITE_MEMORY (0x140A8CA18, uint8_t, "mdata/\0");
+	WRITE_MEMORY (0x140A8CA18, uint8_t, 'm', 'd', 'a', 't', 'a', '/', '\0');
 	WRITE_MEMORY (0x14066CEAE, uint8_t, 0x06);
 	/* Skip parts of the network check state */
 	WRITE_MEMORY (0x1406717B1, uint8_t, 0xE9, 0x22, 0x03, 0x00);
