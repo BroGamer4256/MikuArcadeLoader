@@ -4,11 +4,7 @@ TARGET := x86_64-pc-windows-gnu
 SDL_TARGET := x86_64-w64-mingw32
 SRC = src/dllmain.c src/io.c tomlc99/toml.c minhook/src/buffer.c minhook/src/hook.c minhook/src/trampoline.c minhook/src/hde/hde32.c minhook/src/hde/hde64.c
 OBJ = ${addprefix ${TARGET}/,${SRC:.c=.o}}
-TOML_SRC = tomlc99/toml.c
-TOMLOBJ = ${addprefix ${TARGET}/,${TOML_SRC:.c=.o}}
-MINHOOK_SRC = minhook/src/buffer.c minhook/src/hook.c minhook/src/trampoline.c minhook/src/hde/hde32.c minhook/src/hde/hde64.c
-MINHOOK_OBJ = ${addprefix ${TARGET}/,${MINHOOK_SRC:.c=.o}}
-CFLAGS = -Iminhook/include -ISDL/include -Itomlc99 -std=c99 -Wall -Ofast -target ${TARGET} -DWIN32_LEAN_AND_MEAN -D_WIN32_WINNT=_WIN32_WINNT_WIN7
+CFLAGS = -std=c99 -Iminhook/include -ISDL/include -Itomlc99 -Icimgui -Wall -Ofast -target ${TARGET} -DWIN32_LEAN_AND_MEAN -D_WIN32_WINNT=_WIN32_WINNT_WIN7
 LDFLAGS := -shared -static -static-libgcc -s
 LIBS := SDL/${SDL_TARGET}/build/.libs/libSDL2.a SDL/${SDL_TARGET}/build/.libs/libSDL2main.a -lmingw32 -luuid -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lsetupapi -lversion
 DEPS = SDL
@@ -39,9 +35,8 @@ clean:
 	rm -rf ${TARGET}
 	rm -rf SDL/${SDL_TARGET}
 
-SDL_OUT = SDL
-.PHONY: ${SDL_OUT}
-${SDL_OUT}:
+.PHONY: SDL
+SDL:
 	@mkdir -p SDL/${SDL_TARGET}
 	@cd SDL/${SDL_TARGET} && CFLAGS="-Ofast -DSDL_DYNAMIC_API=0 -DSDL_dynapi_h_" ../configure --build=x86_64-linux-gnu --host=${SDL_TARGET} --disable-atomic --disable-cpuinfo --disable-audio --disable-render --disable-sensor --disable-power --disable-filesystem --disable-threads --disable-timers --disable-file --disable-locale --disable-loadso --disable-dbus --disable-ime --disable-ibus --disable-misc --disable-shared --enable-assertions=release --disable-directx --disable-sdl2-config 
 	@make -s -C SDL/${SDL_TARGET}
