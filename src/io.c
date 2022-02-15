@@ -427,6 +427,9 @@ IOUpdate (HWND DivaWindowHandle)
 						*modulesToScroll += 1;
 					IsMouseScrollDown = false;
 				}
+
+			if (KeyboardIsDown (VK_ESCAPE))
+				*(bool *)0x140EDA6B0 = true;
 		}
 	else if (HadWindowFocus)
 		{
@@ -1107,7 +1110,6 @@ GetButtonsState (bool (*buttonTestFunc) (struct Keybindings))
 	return buttons;
 }
 
-/* TODO: Make holds work */
 void
 UpdateInput ()
 {
@@ -1117,8 +1119,8 @@ UpdateInput ()
 	inputState->MouseX = (int)pos.x;
 	inputState->MouseY = (int)pos.y;
 
-	inputState->Tapped.Buttons = GetButtonsState (IsButtonTapped);
-	inputState->Released.Buttons = GetButtonsState (IsButtonTapped);
+	inputState->Tapped.Buttons = GetButtonsState (IsButtonDown);
+	inputState->Released.Buttons = GetButtonsState (IsButtonReleased);
 	inputState->Down.Buttons = GetButtonsState (IsButtonTapped);
 	inputState->DoubleTapped.Buttons = GetButtonsState (IsButtonTapped);
 	inputState->IntervalTapped.Buttons = GetButtonsState (IsButtonTapped);
