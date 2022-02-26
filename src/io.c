@@ -323,13 +323,13 @@ struct InputState
 
 struct TouchPanelState
 {
-	int Padding00[0x1E];
-	int ConnectionState;
-	int Padding01[0x06];
+	int32_t Padding00[0x1E];
+	int32_t ConnectionState;
+	int32_t Padding01[0x06];
 	float XPosition;
 	float YPosition;
 	float Pressure;
-	int ContactType;
+	int32_t ContactType;
 } * currentTouchPanelState;
 
 struct MouseState
@@ -340,6 +340,20 @@ struct MouseState
 	bool ScrolledUp;
 	bool ScrolledDown;
 } currentMouseState;
+
+struct TargetState
+{
+	struct TargetState *prev;
+	struct TargetState *next;
+	uint8_t padding10[0x4];
+	int32_t tgtType;
+	float tgtRemainingTime;
+	uint8_t padding1C[0x434];
+	uint8_t ToBeRemoved;
+	uint8_t padding451[0xB];
+	int32_t tgtHitState;
+	uint8_t padding460[0x48];
+} * targetStates;
 
 bool HasWindowFocus = false;
 bool currentKeyboardState[KEYBOARD_KEYS];
@@ -373,6 +387,7 @@ struct Keybindings RIGHT_RIGHT
 	= { .keycodes = { 'O' }, .axis = { SDL_AXIS_RIGHT_RIGHT } };
 
 SDL_Window *window;
+SDL_GameController *controllers[255];
 
 char *
 configPath (char *name)
@@ -470,15 +485,23 @@ InitializeIO (HWND DivaWindowHandle)
 				"not Work\n");
 	SDL_GameControllerEventState (SDL_ENABLE);
 
-	for (int i = 0; i < SDL_NumJoysticks (); ++i)
+	for (int i = 0; i < SDL_NumJoysticks (); i++)
 		{
-			if (SDL_IsGameController (i))
+			if (!SDL_IsGameController (i))
+				continue;
+
+			SDL_GameController *controller = SDL_GameControllerOpen (i);
+
+			if (!controller)
 				{
-					if (!SDL_GameControllerOpen (i))
-						printf ("Could not open gamecontroller %i: %s\n",
-								SDL_GameControllerNameForIndex (i),
-								SDL_GetError ());
+					printf ("Could not open gamecontroller %i: %s\n",
+							SDL_GameControllerNameForIndex (i),
+							SDL_GetError ());
+					continue;
 				}
+
+			controllers[i] = controller;
+			break;
 		}
 
 	window = SDL_CreateWindowFrom (DivaWindowHandle);
@@ -490,8 +513,8 @@ InitializeIO (HWND DivaWindowHandle)
 	sliderState = (struct TouchSliderState *)SLIDER_CTRL_TASK_ADDRESS;
 	inputState
 		= (struct InputState *)(*(uint64_t *)(void *)INPUT_STATE_PTR_ADDRESS);
-	currentTouchPanelState
-		= (struct TouchPanelState *)(void *)TASK_TOUCH_ADDRESS;
+	currentTouchPanelState = (struct TouchPanelState *)TASK_TOUCH_ADDRESS;
+	targetStates = (struct TargetState *)TARGET_STATES_BASE_ADDRESS;
 
 	ReadConfig ();
 }
@@ -749,15 +772,29 @@ PollSDLInput ()
 			switch (event.type)
 				{
 				case SDL_CONTROLLERDEVICEADDED:
-					if (SDL_IsGameController (event.cdevice.which))
+					if (!SDL_IsGameController (event.cdevice.which))
+						break;
+
+					SDL_GameController *controller
+						= SDL_GameControllerOpen (event.cdevice.which);
+
+					if (!controller)
 						{
-							if (!SDL_GameControllerOpen (event.cdevice.which))
-								printf (
-									"Could not open gamecontroller %i: %s\n",
+							printf ("Could not open gamecontroller %i: %s\n",
 									SDL_GameControllerNameForIndex (
 										event.cdevice.which),
 									SDL_GetError ());
+							continue;
 						}
+
+					controllers[event.cdevice.which] = controller;
+					break;
+				case SDL_CONTROLLERDEVICEREMOVED:
+					if (!SDL_IsGameController (event.cdevice.which))
+						break;
+					SDL_GameControllerClose (controllers[event.cdevice.which]);
+
+					break;
 				case SDL_MOUSEWHEEL:
 					if (event.wheel.y > 0)
 						IsMouseScrollUp = true;
@@ -950,13 +987,14 @@ UpdateTouch ()
 	currentTouchPanelState->YPosition = (float)pos.y;
 
 	/*
-	currentTouchPanelState->ContactType
-		= (KeyboardIsDown (VK_LBUTTON)		 ? 2
-		   : KeyboardIsReleased (VK_LBUTTON) ? 1
-											 : 0);
-	*/
+	currentTouchPanelState->ContactType = KeyboardIsDown (VK_LBUTTON) ? 2
+										  : KeyboardIsReleased (VK_LBUTTON)
+											  ? 1
+											  : 0;
+
 	currentTouchPanelState->Pressure
 		= (float)(currentTouchPanelState->ContactType != 0);
+	*/
 }
 
 float sliderIncrement = 16.6f / 750.0f;
@@ -1111,6 +1149,19 @@ GetButtonsState (bool (*buttonTestFunc) (struct Keybindings))
 }
 
 void
+EndRumble ()
+{
+	for (int i = 0; i < COUNTOFARR (controllers); i++)
+		{
+			if (!controllers[i]
+				|| !SDL_GameControllerHasRumble (controllers[i]))
+				continue;
+
+			SDL_GameControllerRumble (controllers[i], 0, 0, 1000);
+		}
+}
+
+void
 UpdateInput ()
 {
 	lastInputState = inputState->Down.Buttons;
@@ -1137,4 +1188,40 @@ UpdateInput ()
 
 	for (int i = 0; i < SLIDER_CONTACT_POINTS; i++)
 		ApplyContactPoint (ContactPoints[i], i);
+
+	// Update rumble
+	bool isSliderTouched = false;
+	for (int idx = 0; idx < SLIDER_CONTACT_POINTS; idx++)
+		{
+			if (ContactPoints[idx].InContact)
+				isSliderTouched = true;
+		}
+	if (!isSliderTouched)
+		{
+			EndRumble ();
+			return;
+		}
+	for (int i = 0; i < 64; ++i)
+		{
+			if (targetStates[i].tgtRemainingTime < 0.13f
+				&& targetStates[i].tgtRemainingTime > -0.13f
+				&& targetStates[i].tgtRemainingTime != 0
+				&& (targetStates[i].tgtType == 15
+					|| targetStates[i].tgtType == 16)
+				&& targetStates[i].tgtHitState == 21)
+				{
+					for (int i = 0; i < COUNTOFARR (controllers); i++)
+						{
+							if (!controllers[i]
+								|| !SDL_GameControllerHasRumble (
+									controllers[i]))
+								continue;
+
+							SDL_GameControllerRumble (controllers[i], 8000,
+													  4000, 1000);
+						}
+					return;
+				}
+		}
+	EndRumble ();
 }

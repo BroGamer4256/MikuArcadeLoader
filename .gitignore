@@ -2,4 +2,5 @@
 *.a
 *.la
 *.dll
+*.zip
 x86_64-pc-windows-gnu/
