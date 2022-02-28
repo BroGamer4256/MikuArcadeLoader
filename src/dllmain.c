@@ -11,17 +11,6 @@ void ApplyPatches ();
 void ScaleUpdate (HWND DivaWindowHandle);
 void Initialize ();
 
-enum GameState : uint32_t
-{
-	GS_STARTUP,
-	GS_ADVERTISE,
-	GS_GAME,
-	GS_DATA_TEST,
-	GS_TEST_MODE,
-	GS_APP_ERROR,
-	GS_MAX,
-};
-
 bool FirstUpdate = true;
 HWND DivaWindowHandle = NULL;
 
@@ -50,7 +39,8 @@ Initialize ()
 	WRITE_MEMORY (0x1411A8850, uint8_t, 0x01);
 	/* Allow selecting modules */
 	WRITE_MEMORY (0x1405869AD, uint8_t, 0xB0, 0x01);
-	WRITE_MEMORY (0x140583B45, uint8_t, 0x85, 0x85);
+	WRITE_MEMORY (0x140583B45, uint8_t, 0x85);
+	WRITE_MEMORY (0x140583C8C, uint8_t, 0x85);
 	/* Unlock all modules and items */
 	memset ((void *)0x1411A8990, 0xFF, 128);
 	memset ((void *)0x1411A8B08, 0xFF, 128);
@@ -60,7 +50,7 @@ FUNCTION_PTR (void, __stdcall, UpdateTask, UPDATE_TASKS_ADDRESS);
 void
 FastLoaderUpdate ()
 {
-	if (*(uint32_t *)CURRENT_GAME_STATE_ADDRESS != GS_STARTUP)
+	if (*(uint32_t *)CURRENT_GAME_STATE_ADDRESS != 0)
 		return;
 
 	for (int i = 0; i < 3; i++)
@@ -81,15 +71,16 @@ ApplyPatches ()
 	/* Clear framebuffer at all resolutions */
 	WRITE_NOP (0x140501480, 2);
 	WRITE_NOP (0x140501515, 2);
-	/* Write ram files to the current directory instead of Y:/SBZV/ram */
+	/* TODO: Fix these two */
+	/* Write ram files to ram/ instead of Y:/SBZV/ram/ */
 	WRITE_MEMORY (0x14066CF09, uint8_t, 0xE9, 0xD8, 0x00);
 	/* Change mdata path from "C:/Mount/Option" to "mdata/" */
-	WRITE_MEMORY (0x140A8CA18, uint8_t, "mdata/\0");
+	WRITE_MEMORY (0x140A8CA18, uint8_t, 'm', 'd', 'a', 't', 'a', '/', '\0');
 	WRITE_MEMORY (0x14066CEAE, uint8_t, 0x06);
 	/* Skip parts of the network check state */
 	WRITE_MEMORY (0x1406717B1, uint8_t, 0xE9, 0x22, 0x03, 0x00);
 	/* Set the initial DHCP WAIT timer value to 0 */
-	WRITE_MEMORY (0x1406724E7, uint8_t, 0x00, 0x00);
+	WRITE_NULL (0x1406724E7, 2);
 	/* Ignore SYSTEM_STARTUP Location Server checks */
 	WRITE_NOP (0x1406732A2, 2);
 	/* Toon Shader Fix by lybxlpsv */
@@ -103,10 +94,10 @@ ApplyPatches ()
 	/* Enable Modifiers */
 	WRITE_NOP (0x1405CB1B3, 13);
 	WRITE_NOP (0x1405CA0F5, 2);
-	WRITE_NOP (0x1405CB14A, 6);
-	WRITE_NOP (0x140136CFA, 6);
+	// WRITE_NOP (0x1405CB14A, 6);
+	// WRITE_NOP (0x140136CFA, 6);
 	/* Enable modselector without use_card */
-	WRITE_MEMORY (0x1405C513B, uint8_t, 0x01);
+	// WRITE_MEMORY (0x1405C513B, uint8_t, 0x01);
 	/* Fix back button */
 	WRITE_MEMORY (0x140578FB8, uint8_t, 0xE9, 0x73, 0xFF, 0xFF, 0xFF);
 	/* Hide Keychip ID */
@@ -163,42 +154,29 @@ ApplyPatches ()
 	WRITE_NOP (0x1405030A0, 6);
 }
 
-float *uiAspectRatio;
-float *uiWidth;
-float *uiHeight;
-int *fb1Width;
-int *fb1Height;
-double *fbAspectRatio;
-
 void
 ScaleUpdate (HWND DivaWindowHandle)
 {
-	uiAspectRatio = (float *)UI_ASPECT_RATIO;
-	uiWidth = (float *)UI_WIDTH_ADDRESS;
-	uiHeight = (float *)UI_HEIGHT_ADDRESS;
-	fb1Width = (int *)FB1_WIDTH_ADDRESS;
-	fb1Height = (int *)FB1_HEIGHT_ADDRESS;
-	fbAspectRatio = (double *)FB_ASPECT_RATIO;
-
 	RECT hWindow;
 	if (GetClientRect (DivaWindowHandle, &hWindow) == 0)
 		return;
 
-	*uiAspectRatio = (float)hWindow.right / (float)hWindow.bottom;
-	*fbAspectRatio = (double)hWindow.right / (double)hWindow.bottom;
-	*uiWidth = hWindow.right;
-	*uiHeight = hWindow.bottom;
-	*fb1Width = hWindow.right;
-	*fb1Height = hWindow.bottom;
+	*(float *)UI_ASPECT_RATIO = (float)hWindow.right / (float)hWindow.bottom;
+	*(double *)FB_ASPECT_RATIO
+		= (double)hWindow.right / (double)hWindow.bottom;
+	*(float *)UI_WIDTH_ADDRESS = hWindow.right;
+	*(float *)UI_HEIGHT_ADDRESS = hWindow.bottom;
+	*(int *)FB1_WIDTH_ADDRESS = hWindow.right;
+	*(int *)FB1_HEIGHT_ADDRESS = hWindow.bottom;
 
-	*((int *)0x00000001411AD608) = 0;
+	*(int *)0x00000001411AD608 = 0;
 
-	*((int *)0x0000000140EDA8E4) = *(int *)0x0000000140EDA8BC;
-	*((int *)0x0000000140EDA8E8) = *(int *)0x0000000140EDA8C0;
+	*(int *)0x0000000140EDA8E4 = *(int *)0x0000000140EDA8BC;
+	*(int *)0x0000000140EDA8E8 = *(int *)0x0000000140EDA8C0;
 
 	*(float *)0x00000001411A1900 = 0;
-	*(float *)0x00000001411A1904 = (float)*(int *)0x0000000140EDA8BC;
-	*(float *)0x00000001411A1908 = (float)*(int *)0x0000000140EDA8C0;
+	*(float *)0x00000001411A1904 = *(int *)0x0000000140EDA8BC;
+	*(float *)0x00000001411A1908 = *(int *)0x0000000140EDA8C0;
 }
 
 BOOL WINAPI
@@ -207,10 +185,10 @@ DllMain (HMODULE mod, DWORD cause, void *ctx)
 	if (cause == DLL_PROCESS_DETACH)
 		DiposeIO ();
 	if (cause != DLL_PROCESS_ATTACH)
-		return TRUE;
+		return 1;
 
-	INSTALL_HOOK (Update);
 	ApplyPatches ();
+	INSTALL_HOOK (Update);
 
-	return TRUE;
+	return 1;
 }

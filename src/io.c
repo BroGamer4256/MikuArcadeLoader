@@ -476,13 +476,13 @@ InitializeIO (HWND DivaWindowHandle)
 	if (SDL_Init (SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMECONTROLLER
 				  | SDL_INIT_EVENTS | SDL_INIT_VIDEO)
 		!= 0)
-		printf ("SDL Error: %s\n", SDL_GetError ());
+		printf ("Error at InitializeIO (): %s\n", SDL_GetError ());
 
 	if (SDL_GameControllerAddMappingsFromFile (
 			configPath ("gamecontrollerdb.txt"))
 		== -1)
-		printf ("Cannot read plugins/gamecontrollerdb.txt\nControllers Will "
-				"not Work\n");
+		printf ("Error at InitializeIO (): Cannot read "
+				"plugins/gamecontrollerdb.txt\n");
 	SDL_GameControllerEventState (SDL_ENABLE);
 
 	for (int i = 0; i < SDL_NumJoysticks (); i++)
@@ -508,7 +508,7 @@ InitializeIO (HWND DivaWindowHandle)
 	if (window != NULL)
 		SDL_SetWindowResizable (window, true);
 	else
-		printf ("SDL Error: %s\n", SDL_GetError ());
+		printf ("Error at InitializeIO (): %s\n", SDL_GetError ());
 
 	sliderState = (struct TouchSliderState *)SLIDER_CTRL_TASK_ADDRESS;
 	inputState
@@ -551,12 +551,24 @@ StringToConfigEnum (char *value)
 				rval.axis = ConfigControllerAXIS[i].axis;
 				return rval;
 			}
+
+	printf ("Error at StringToConfigEnum (): Unknown value: %s\n", value);
 	return rval;
 }
 
 void
-SetConfigValue (toml_array_t *array, struct Keybindings *keybind)
+SetConfigValue (toml_table_t *table, char *key, struct Keybindings *keybind)
 {
+	toml_array_t *array = toml_array_in (table, key);
+	if (!array)
+		{
+			printf ("Error at SetConfigValue (): Cannot find array: %s\n",
+					key);
+			return;
+		}
+	
+	memset (keybind, 0, sizeof (*keybind));
+
 	for (int i = 0;; i++)
 		{
 			toml_datum_t bind = toml_string_at (array, i);
@@ -608,7 +620,7 @@ ReadConfig ()
 	FILE *file = fopen (configPath ("keyconfig.toml"), "r");
 	if (!file)
 		{
-			printf ("TOML Error: cannot open keyconfig.toml\n");
+			printf ("Error at ReadConfig (): cannot open keyconfig.toml\n");
 			return;
 		}
 	char errorbuf[200];
@@ -617,45 +629,21 @@ ReadConfig ()
 
 	if (!config)
 		{
-			printf ("TOML Error: %s\n", errorbuf);
+			printf ("Error at ReadConfig (): %s\n", errorbuf);
 			return;
 		}
 
-	memset (&TEST, 0, sizeof (TEST));
-	memset (&SERVICE, 0, sizeof (SERVICE));
-	memset (&START, 0, sizeof (START));
-	memset (&TRIANGLE, 0, sizeof (TRIANGLE));
-	memset (&SQUARE, 0, sizeof (SQUARE));
-	memset (&CROSS, 0, sizeof (CROSS));
-	memset (&CIRCLE, 0, sizeof (CIRCLE));
-	memset (&LEFT_LEFT, 0, sizeof (LEFT_LEFT));
-	memset (&LEFT_RIGHT, 0, sizeof (LEFT_RIGHT));
-	memset (&RIGHT_LEFT, 0, sizeof (RIGHT_LEFT));
-	memset (&RIGHT_RIGHT, 0, sizeof (RIGHT_RIGHT));
-
-	toml_array_t *test_arr = toml_array_in (config, "TEST");
-	toml_array_t *service_arr = toml_array_in (config, "SERVICE");
-	toml_array_t *start_arr = toml_array_in (config, "START");
-	toml_array_t *triangle_arr = toml_array_in (config, "TRIANGLE");
-	toml_array_t *square_arr = toml_array_in (config, "SQUARE");
-	toml_array_t *cross_arr = toml_array_in (config, "CROSS");
-	toml_array_t *circle_arr = toml_array_in (config, "CIRCLE");
-	toml_array_t *left_left_arr = toml_array_in (config, "LEFT_LEFT");
-	toml_array_t *left_right_arr = toml_array_in (config, "LEFT_RIGHT");
-	toml_array_t *right_left_arr = toml_array_in (config, "RIGHT_LEFT");
-	toml_array_t *right_right_arr = toml_array_in (config, "RIGHT_RIGHT");
-
-	SetConfigValue (test_arr, &TEST);
-	SetConfigValue (service_arr, &SERVICE);
-	SetConfigValue (start_arr, &START);
-	SetConfigValue (triangle_arr, &TRIANGLE);
-	SetConfigValue (square_arr, &SQUARE);
-	SetConfigValue (cross_arr, &CROSS);
-	SetConfigValue (circle_arr, &CIRCLE);
-	SetConfigValue (left_left_arr, &LEFT_LEFT);
-	SetConfigValue (left_right_arr, &LEFT_RIGHT);
-	SetConfigValue (right_left_arr, &RIGHT_LEFT);
-	SetConfigValue (right_right_arr, &RIGHT_RIGHT);
+	SetConfigValue (config, "TEST", &TEST);
+	SetConfigValue (config, "SERVICE", &SERVICE);
+	SetConfigValue (config, "START", &START);
+	SetConfigValue (config, "TRIANGLE", &TRIANGLE);
+	SetConfigValue (config, "SQUARE", &SQUARE);
+	SetConfigValue (config, "CROSS", &CROSS);
+	SetConfigValue (config, "CIRCLE", &CIRCLE);
+	SetConfigValue (config, "LEFT_LEFT", &LEFT_LEFT);
+	SetConfigValue (config, "LEFT_RIGHT", &LEFT_RIGHT);
+	SetConfigValue (config, "RIGHT_LEFT", &RIGHT_LEFT);
+	SetConfigValue (config, "RIGHT_RIGHT", &RIGHT_RIGHT);
 
 	toml_free (config);
 }
@@ -780,7 +768,8 @@ PollSDLInput ()
 
 					if (!controller)
 						{
-							printf ("Could not open gamecontroller %i: %s\n",
+							printf ("Error at PollSDLInput (): Could not open "
+									"gamecontroller %i: %s\n",
 									SDL_GameControllerNameForIndex (
 										event.cdevice.which),
 									SDL_GetError ());
