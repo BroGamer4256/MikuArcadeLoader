@@ -12,8 +12,6 @@ bool IsMouseScrollDown = false;
 void ReadConfig ();
 
 void PollMouseInput ();
-POINT GetMousePosition ();
-POINT GetMouseRelativePosition ();
 
 bool KeyboardIsDown (BYTE keycode);
 bool KeyboardIsUp (BYTE keycode);
@@ -25,7 +23,6 @@ bool KeyboardWasUp (BYTE keycode);
 void PollSDLInput ();
 
 void UpdateTouch ();
-void UpdateTouchUnfocused ();
 
 void UpdateInputUnfocused ();
 void UpdateInput ();
@@ -566,7 +563,7 @@ SetConfigValue (toml_table_t *table, char *key, struct Keybindings *keybind)
 					key);
 			return;
 		}
-	
+
 	memset (keybind, 0, sizeof (*keybind));
 
 	for (int i = 0;; i++)
@@ -695,12 +692,6 @@ PollMouseInput (HWND DivaWindowHandle)
 				|| currentMouseState.RelativePosition.y < 0)
 				currentMouseState.RelativePosition.y = 0;
 		}
-}
-
-inline POINT
-GetMouseRelativePosition ()
-{
-	return currentMouseState.RelativePosition;
 }
 
 inline bool
@@ -967,15 +958,14 @@ ControllerAxisIsReleased (enum SDLAxis axis)
 	return ControllerAxisIsUp (axis) && ControllerAxisWasDown (axis);
 }
 
-/* TODO: Fix whatever is causing crashes when this isnt commented */
 void
 UpdateTouch ()
 {
-	POINT pos = GetMouseRelativePosition ();
-	currentTouchPanelState->XPosition = (float)pos.x;
-	currentTouchPanelState->YPosition = (float)pos.y;
+	currentTouchPanelState->XPosition
+		= (float)currentMouseState.RelativePosition.x;
+	currentTouchPanelState->YPosition
+		= (float)currentMouseState.RelativePosition.y;
 
-	/*
 	currentTouchPanelState->ContactType = KeyboardIsDown (VK_LBUTTON) ? 2
 										  : KeyboardIsReleased (VK_LBUTTON)
 											  ? 1
@@ -983,7 +973,6 @@ UpdateTouch ()
 
 	currentTouchPanelState->Pressure
 		= (float)(currentTouchPanelState->ContactType != 0);
-	*/
 }
 
 float sliderIncrement = 16.6f / 750.0f;
@@ -1155,9 +1144,8 @@ UpdateInput ()
 {
 	lastInputState = inputState->Down.Buttons;
 
-	POINT pos = GetMouseRelativePosition ();
-	inputState->MouseX = (int)pos.x;
-	inputState->MouseY = (int)pos.y;
+	inputState->MouseX = (int)currentMouseState.RelativePosition.x;
+	inputState->MouseY = (int)currentMouseState.RelativePosition.y;
 
 	inputState->Tapped.Buttons = GetButtonsState (IsButtonDown);
 	inputState->Released.Buttons = GetButtonsState (IsButtonReleased);
