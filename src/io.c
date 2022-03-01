@@ -473,7 +473,10 @@ InitializeIO (HWND DivaWindowHandle)
 	if (SDL_Init (SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMECONTROLLER
 				  | SDL_INIT_EVENTS | SDL_INIT_VIDEO)
 		!= 0)
-		printf ("Error at InitializeIO (): %s\n", SDL_GetError ());
+		printf ("Error at SDL_Init (SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | "
+				"SDL_INIT_GAMECONTROLLER | SDL_INIT_EVENTS | SDL_INIT_VIDEO): "
+				"%s\n",
+				SDL_GetError ());
 
 	if (SDL_GameControllerAddMappingsFromFile (
 			configPath ("gamecontrollerdb.txt"))
@@ -505,7 +508,8 @@ InitializeIO (HWND DivaWindowHandle)
 	if (window != NULL)
 		SDL_SetWindowResizable (window, true);
 	else
-		printf ("Error at InitializeIO (): %s\n", SDL_GetError ());
+		printf ("Error at SDL_CreateWindowFrom (DivaWindowHandle): %s\n",
+				SDL_GetError ());
 
 	sliderState = (struct TouchSliderState *)SLIDER_CTRL_TASK_ADDRESS;
 	inputState
@@ -549,7 +553,7 @@ StringToConfigEnum (char *value)
 				return rval;
 			}
 
-	printf ("Error at StringToConfigEnum (): Unknown value: %s\n", value);
+	printf ("Error at StringToConfigEnum (%s): Unknown value\n", value);
 	return rval;
 }
 
@@ -559,8 +563,7 @@ SetConfigValue (toml_table_t *table, char *key, struct Keybindings *keybind)
 	toml_array_t *array = toml_array_in (table, key);
 	if (!array)
 		{
-			printf ("Error at SetConfigValue (): Cannot find array: %s\n",
-					key);
+			printf ("Error at SetConfigValue (%s): Cannot find array\n", key);
 			return;
 		}
 
@@ -760,7 +763,7 @@ PollSDLInput ()
 					if (!controller)
 						{
 							printf ("Error at PollSDLInput (): Could not open "
-									"gamecontroller %i: %s\n",
+									"gamecontroller %s: %s\n",
 									SDL_GameControllerNameForIndex (
 										event.cdevice.which),
 									SDL_GetError ());
