@@ -6,23 +6,12 @@
 #include <stdio.h>
 #include <windows.h>
 
-void FastLoaderUpdate ();
+void UpdateFastLoader ();
+void UpdateScale (HWND DivaWindowHandle);
 void ApplyPatches ();
-void ScaleUpdate (HWND DivaWindowHandle);
-void Initialize ();
 
 bool FirstUpdate = true;
 HWND DivaWindowHandle = NULL;
-
-HOOK (void, __stdcall, Update, 0x14018CC40)
-{
-	if (FirstUpdate)
-		Initialize ();
-
-	IOUpdate (DivaWindowHandle);
-	ScaleUpdate (DivaWindowHandle);
-	FastLoaderUpdate ();
-}
 
 void
 Initialize ()
@@ -37,6 +26,8 @@ Initialize ()
 
 	/* Enable use_card */
 	WRITE_MEMORY (0x1411A8850, uint8_t, 0x01);
+	WRITE_MEMORY (0x1411A9685, uint8_t, 0x01);
+	WRITE_MEMORY (0x1411A8B00, uint8_t, 0x01);
 	/* Allow selecting modules */
 	WRITE_MEMORY (0x1405869AD, uint8_t, 0xB0, 0x01);
 	WRITE_MEMORY (0x140583B45, uint8_t, 0x85);
@@ -46,9 +37,19 @@ Initialize ()
 	memset ((void *)0x1411A8B08, 0xFF, 128);
 }
 
+HOOK (void, __stdcall, Update, 0x14018CC40)
+{
+	if (FirstUpdate)
+		Initialize ();
+
+	UpdateScale (DivaWindowHandle);
+	UpdateScale (DivaWindowHandle);
+	UpdateFastLoader ();
+}
+
 FUNCTION_PTR (void, __stdcall, UpdateTask, UPDATE_TASKS_ADDRESS);
 void
-FastLoaderUpdate ()
+UpdateFastLoader ()
 {
 	if (*(uint32_t *)CURRENT_GAME_STATE_ADDRESS != 0)
 		return;
@@ -58,6 +59,31 @@ FastLoaderUpdate ()
 
 	*(int *)DATA_INIT_STATE_ADDRESS = 3;
 	*(int *)SYSTEM_WARNING_ELAPSED_ADDRESS = 3939;
+}
+
+void
+UpdateScale (HWND DivaWindowHandle)
+{
+	RECT hWindow;
+	if (GetClientRect (DivaWindowHandle, &hWindow) == 0)
+		return;
+
+	*(float *)UI_ASPECT_RATIO = (float)hWindow.right / (float)hWindow.bottom;
+	*(double *)FB_ASPECT_RATIO
+		= (double)hWindow.right / (double)hWindow.bottom;
+	*(float *)UI_WIDTH_ADDRESS = hWindow.right;
+	*(float *)UI_HEIGHT_ADDRESS = hWindow.bottom;
+	*(int *)FB1_WIDTH_ADDRESS = hWindow.right;
+	*(int *)FB1_HEIGHT_ADDRESS = hWindow.bottom;
+
+	*(int *)0x00000001411AD608 = 0;
+
+	*(int *)0x0000000140EDA8E4 = *(int *)0x0000000140EDA8BC;
+	*(int *)0x0000000140EDA8E8 = *(int *)0x0000000140EDA8C0;
+
+	*(float *)0x00000001411A1900 = 0;
+	*(float *)0x00000001411A1904 = *(int *)0x0000000140EDA8BC;
+	*(float *)0x00000001411A1908 = *(int *)0x0000000140EDA8C0;
 }
 
 void
@@ -94,10 +120,10 @@ ApplyPatches ()
 	/* Enable Modifiers */
 	WRITE_NOP (0x1405CB1B3, 13);
 	WRITE_NOP (0x1405CA0F5, 2);
-	// WRITE_NOP (0x1405CB14A, 6);
-	// WRITE_NOP (0x140136CFA, 6);
+	WRITE_NOP (0x1405CB14A, 6);
+	WRITE_NOP (0x140136CFA, 6);
 	/* Enable modselector without use_card */
-	// WRITE_MEMORY (0x1405C513B, uint8_t, 0x01);
+	WRITE_MEMORY (0x1405C513B, uint8_t, 0x01);
 	/* Fix back button */
 	WRITE_MEMORY (0x140578FB8, uint8_t, 0xE9, 0x73, 0xFF, 0xFF, 0xFF);
 	/* Hide Keychip ID */
@@ -153,31 +179,6 @@ ApplyPatches ()
 	WRITE_MEMORY (0x1404ACD2B, uint8_t, 0x44, 0x8B, 0x05, 0xC6, 0x08, 0xD0,
 				  0x00);
 	WRITE_NOP (0x1405030A0, 6);
-}
-
-void
-ScaleUpdate (HWND DivaWindowHandle)
-{
-	RECT hWindow;
-	if (GetClientRect (DivaWindowHandle, &hWindow) == 0)
-		return;
-
-	*(float *)UI_ASPECT_RATIO = (float)hWindow.right / (float)hWindow.bottom;
-	*(double *)FB_ASPECT_RATIO
-		= (double)hWindow.right / (double)hWindow.bottom;
-	*(float *)UI_WIDTH_ADDRESS = hWindow.right;
-	*(float *)UI_HEIGHT_ADDRESS = hWindow.bottom;
-	*(int *)FB1_WIDTH_ADDRESS = hWindow.right;
-	*(int *)FB1_HEIGHT_ADDRESS = hWindow.bottom;
-
-	*(int *)0x00000001411AD608 = 0;
-
-	*(int *)0x0000000140EDA8E4 = *(int *)0x0000000140EDA8BC;
-	*(int *)0x0000000140EDA8E8 = *(int *)0x0000000140EDA8C0;
-
-	*(float *)0x00000001411A1900 = 0;
-	*(float *)0x00000001411A1904 = *(int *)0x0000000140EDA8BC;
-	*(float *)0x00000001411A1908 = *(int *)0x0000000140EDA8C0;
 }
 
 BOOL WINAPI

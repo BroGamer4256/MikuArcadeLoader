@@ -398,7 +398,61 @@ configPath (char *name)
 }
 
 void
-IOUpdate (HWND DivaWindowHandle)
+InitializeIO (HWND DivaWindowHandle)
+{
+	SDL_SetMainReady ();
+	if (SDL_Init (SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMECONTROLLER
+				  | SDL_INIT_EVENTS | SDL_INIT_VIDEO)
+		!= 0)
+		printf ("Error at SDL_Init (SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | "
+				"SDL_INIT_GAMECONTROLLER | SDL_INIT_EVENTS | SDL_INIT_VIDEO): "
+				"%s\n",
+				SDL_GetError ());
+
+	if (SDL_GameControllerAddMappingsFromFile (
+			configPath ("gamecontrollerdb.txt"))
+		== -1)
+		printf ("Error at InitializeIO (): Cannot read "
+				"plugins/gamecontrollerdb.txt\n");
+	SDL_GameControllerEventState (SDL_ENABLE);
+
+	for (int i = 0; i < SDL_NumJoysticks (); i++)
+		{
+			if (!SDL_IsGameController (i))
+				continue;
+
+			SDL_GameController *controller = SDL_GameControllerOpen (i);
+
+			if (!controller)
+				{
+					printf ("Could not open gamecontroller %i: %s\n",
+							SDL_GameControllerNameForIndex (i),
+							SDL_GetError ());
+					continue;
+				}
+
+			controllers[i] = controller;
+			break;
+		}
+
+	window = SDL_CreateWindowFrom (DivaWindowHandle);
+	if (window != NULL)
+		SDL_SetWindowResizable (window, true);
+	else
+		printf ("Error at SDL_CreateWindowFrom (DivaWindowHandle): %s\n",
+				SDL_GetError ());
+
+	sliderState = (struct TouchSliderState *)SLIDER_CTRL_TASK_ADDRESS;
+	inputState
+		= (struct InputState *)(*(uint64_t *)(void *)INPUT_STATE_PTR_ADDRESS);
+	currentTouchPanelState = (struct TouchPanelState *)TASK_TOUCH_ADDRESS;
+	targetStates = (struct TargetState *)TARGET_STATES_BASE_ADDRESS;
+
+	ReadConfig ();
+}
+
+void
+UpdateIO (HWND DivaWindowHandle)
 {
 	bool HadWindowFocus = HasWindowFocus;
 	HasWindowFocus = DivaWindowHandle == NULL
@@ -406,6 +460,7 @@ IOUpdate (HWND DivaWindowHandle)
 
 	currentTouchPanelState->ConnectionState = 1;
 	sliderState->State = SLIDER_OK;
+
 	if (HasWindowFocus)
 		{
 			memcpy (lastKeyboardState, currentKeyboardState,
@@ -464,60 +519,6 @@ IOUpdate (HWND DivaWindowHandle)
 					sliderState->SectionPositions[i] = 0.0f;
 				}
 		}
-}
-
-void
-InitializeIO (HWND DivaWindowHandle)
-{
-	SDL_SetMainReady ();
-	if (SDL_Init (SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMECONTROLLER
-				  | SDL_INIT_EVENTS | SDL_INIT_VIDEO)
-		!= 0)
-		printf ("Error at SDL_Init (SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | "
-				"SDL_INIT_GAMECONTROLLER | SDL_INIT_EVENTS | SDL_INIT_VIDEO): "
-				"%s\n",
-				SDL_GetError ());
-
-	if (SDL_GameControllerAddMappingsFromFile (
-			configPath ("gamecontrollerdb.txt"))
-		== -1)
-		printf ("Error at InitializeIO (): Cannot read "
-				"plugins/gamecontrollerdb.txt\n");
-	SDL_GameControllerEventState (SDL_ENABLE);
-
-	for (int i = 0; i < SDL_NumJoysticks (); i++)
-		{
-			if (!SDL_IsGameController (i))
-				continue;
-
-			SDL_GameController *controller = SDL_GameControllerOpen (i);
-
-			if (!controller)
-				{
-					printf ("Could not open gamecontroller %i: %s\n",
-							SDL_GameControllerNameForIndex (i),
-							SDL_GetError ());
-					continue;
-				}
-
-			controllers[i] = controller;
-			break;
-		}
-
-	window = SDL_CreateWindowFrom (DivaWindowHandle);
-	if (window != NULL)
-		SDL_SetWindowResizable (window, true);
-	else
-		printf ("Error at SDL_CreateWindowFrom (DivaWindowHandle): %s\n",
-				SDL_GetError ());
-
-	sliderState = (struct TouchSliderState *)SLIDER_CTRL_TASK_ADDRESS;
-	inputState
-		= (struct InputState *)(*(uint64_t *)(void *)INPUT_STATE_PTR_ADDRESS);
-	currentTouchPanelState = (struct TouchPanelState *)TASK_TOUCH_ADDRESS;
-	targetStates = (struct TargetState *)TARGET_STATES_BASE_ADDRESS;
-
-	ReadConfig ();
 }
 
 void
