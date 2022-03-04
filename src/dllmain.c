@@ -42,7 +42,7 @@ HOOK (void, __stdcall, Update, 0x14018CC40)
 	if (FirstUpdate)
 		Initialize ();
 
-	UpdateScale (DivaWindowHandle);
+	UpdateIO (DivaWindowHandle);
 	UpdateScale (DivaWindowHandle);
 	UpdateFastLoader ();
 }
@@ -97,7 +97,6 @@ ApplyPatches ()
 	/* Clear framebuffer at all resolutions */
 	WRITE_NOP (0x140501480, 2);
 	WRITE_NOP (0x140501515, 2);
-	/* TODO: Fix these two */
 	/* Write ram files to ram/ instead of Y:/SBZV/ram/ */
 	WRITE_MEMORY (0x14066CF09, uint8_t, 0xE9, 0xD8, 0x00);
 	/* Change mdata path from "C:/Mount/Option" to "mdata/" */
