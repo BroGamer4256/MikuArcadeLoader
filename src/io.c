@@ -198,59 +198,32 @@ struct
 	{ "ENTER", VK_RETURN },
 };
 
-enum SDL_GameController_Button
-{
-	SDL_CONTROLLERBUTTON_INVALID,
-	SDL_CONTROLLERBUTTON_A,
-	SDL_CONTROLLERBUTTON_B,
-	SDL_CONTROLLERBUTTON_X,
-	SDL_CONTROLLERBUTTON_Y,
-	SDL_CONTROLLERBUTTON_BACK,
-	SDL_CONTROLLERBUTTON_GUIDE,
-	SDL_CONTROLLERBUTTON_START,
-	SDL_CONTROLLERBUTTON_LEFTSTICK,
-	SDL_CONTROLLERBUTTON_RIGHTSTICK,
-	SDL_CONTROLLERBUTTON_LEFTSHOULDER,
-	SDL_CONTROLLERBUTTON_RIGHTSHOULDER,
-	SDL_CONTROLLERBUTTON_DPAD_UP,
-	SDL_CONTROLLERBUTTON_DPAD_DOWN,
-	SDL_CONTROLLERBUTTON_DPAD_LEFT,
-	SDL_CONTROLLERBUTTON_DPAD_RIGHT,
-	SDL_CONTROLLERBUTTON_MISC1,
-	SDL_CONTROLLERBUTTON_PADDLE1,
-	SDL_CONTROLLERBUTTON_PADDLE2,
-	SDL_CONTROLLERBUTTON_PADDLE3,
-	SDL_CONTROLLERBUTTON_PADDLE4,
-	SDL_CONTROLLERBUTTON_TOUCHPAD,
-	SDL_CONTROLLERBUTTON_MAX
-};
-
 struct
 {
 	const char *string;
-	enum SDL_GameController_Button button;
+	SDL_GameControllerButton button;
 } ConfigControllerButtons[] = {
-	{ "SDL_A", SDL_CONTROLLERBUTTON_A },
-	{ "SDL_B", SDL_CONTROLLERBUTTON_B },
-	{ "SDL_X", SDL_CONTROLLERBUTTON_X },
-	{ "SDL_Y", SDL_CONTROLLERBUTTON_Y },
-	{ "SDL_BACK", SDL_CONTROLLERBUTTON_BACK },
-	{ "SDL_GUIDE", SDL_CONTROLLERBUTTON_GUIDE },
-	{ "SDL_START", SDL_CONTROLLERBUTTON_START },
-	{ "SDL_LSTICK_PRESS", SDL_CONTROLLERBUTTON_LEFTSTICK },
-	{ "SDL_RSTICK_PRESS", SDL_CONTROLLERBUTTON_RIGHTSTICK },
-	{ "SDL_LSHOULDER", SDL_CONTROLLERBUTTON_LEFTSHOULDER },
-	{ "SDL_RSHOULDER", SDL_CONTROLLERBUTTON_RIGHTSHOULDER },
-	{ "SDL_DPAD_UP", SDL_CONTROLLERBUTTON_DPAD_UP },
-	{ "SDL_DPAD_DOWN", SDL_CONTROLLERBUTTON_DPAD_DOWN },
-	{ "SDL_DPAD_LEFT", SDL_CONTROLLERBUTTON_DPAD_LEFT },
-	{ "SDL_DPAD_RIGHT", SDL_CONTROLLERBUTTON_DPAD_RIGHT },
-	{ "SDL_MISC", SDL_CONTROLLERBUTTON_MISC1 },
-	{ "SDL_PADDLE1", SDL_CONTROLLERBUTTON_PADDLE1 },
-	{ "SDL_PADDLE2", SDL_CONTROLLERBUTTON_PADDLE2 },
-	{ "SDL_PADDLE3", SDL_CONTROLLERBUTTON_PADDLE3 },
-	{ "SDL_PADDLE4", SDL_CONTROLLERBUTTON_PADDLE4 },
-	{ "SDL_TOUCHPAD", SDL_CONTROLLERBUTTON_TOUCHPAD },
+	{ "SDL_A", SDL_CONTROLLER_BUTTON_A },
+	{ "SDL_B", SDL_CONTROLLER_BUTTON_B },
+	{ "SDL_X", SDL_CONTROLLER_BUTTON_X },
+	{ "SDL_Y", SDL_CONTROLLER_BUTTON_Y },
+	{ "SDL_BACK", SDL_CONTROLLER_BUTTON_BACK },
+	{ "SDL_GUIDE", SDL_CONTROLLER_BUTTON_GUIDE },
+	{ "SDL_START", SDL_CONTROLLER_BUTTON_START },
+	{ "SDL_LSTICK_PRESS", SDL_CONTROLLER_BUTTON_LEFTSTICK },
+	{ "SDL_RSTICK_PRESS", SDL_CONTROLLER_BUTTON_RIGHTSTICK },
+	{ "SDL_LSHOULDER", SDL_CONTROLLER_BUTTON_LEFTSHOULDER },
+	{ "SDL_RSHOULDER", SDL_CONTROLLER_BUTTON_RIGHTSHOULDER },
+	{ "SDL_DPAD_UP", SDL_CONTROLLER_BUTTON_DPAD_UP },
+	{ "SDL_DPAD_DOWN", SDL_CONTROLLER_BUTTON_DPAD_DOWN },
+	{ "SDL_DPAD_LEFT", SDL_CONTROLLER_BUTTON_DPAD_LEFT },
+	{ "SDL_DPAD_RIGHT", SDL_CONTROLLER_BUTTON_DPAD_RIGHT },
+	{ "SDL_MISC", SDL_CONTROLLER_BUTTON_MISC1 },
+	{ "SDL_PADDLE1", SDL_CONTROLLER_BUTTON_PADDLE1 },
+	{ "SDL_PADDLE2", SDL_CONTROLLER_BUTTON_PADDLE2 },
+	{ "SDL_PADDLE3", SDL_CONTROLLER_BUTTON_PADDLE3 },
+	{ "SDL_PADDLE4", SDL_CONTROLLER_BUTTON_PADDLE4 },
+	{ "SDL_TOUCHPAD", SDL_CONTROLLER_BUTTON_TOUCHPAD },
 };
 
 struct
@@ -273,8 +246,7 @@ struct
 struct Keybindings
 {
 	BYTE keycodes[COUNTOFARR (ConfigKeyboardButtons)];
-	enum SDL_GameController_Button
-		buttons[COUNTOFARR (ConfigControllerButtons)];
+	SDL_GameControllerButton buttons[COUNTOFARR (ConfigControllerButtons)];
 	enum SDLAxis axis[COUNTOFARR (ConfigControllerAXIS)];
 };
 
@@ -290,7 +262,7 @@ struct ConfigValue
 {
 	enum EnumType type;
 	BYTE keycode;
-	enum SDL_GameController_Button button;
+	SDL_GameControllerButton button;
 	enum SDLAxis axis;
 };
 
@@ -357,23 +329,24 @@ bool currentKeyboardState[KEYBOARD_KEYS];
 bool lastKeyboardState[KEYBOARD_KEYS];
 
 struct Keybindings TEST
-	= { .keycodes = { VK_F1 }, .buttons = { SDL_CONTROLLERBUTTON_INVALID } };
+	= { .keycodes = { VK_F1 }, .buttons = { SDL_CONTROLLER_BUTTON_INVALID } };
 struct Keybindings SERVICE
-	= { .keycodes = { VK_F2 }, .buttons = { SDL_CONTROLLERBUTTON_INVALID } };
-struct Keybindings START
-	= { .keycodes = { VK_RETURN }, .buttons = { SDL_CONTROLLERBUTTON_START } };
-struct Keybindings TRIANGLE
-	= { .keycodes = { 'W', 'I' },
-		.buttons = { SDL_CONTROLLERBUTTON_Y, SDL_CONTROLLERBUTTON_DPAD_UP } };
+	= { .keycodes = { VK_F2 }, .buttons = { SDL_CONTROLLER_BUTTON_INVALID } };
+struct Keybindings START = { .keycodes = { VK_RETURN },
+							 .buttons = { SDL_CONTROLLER_BUTTON_START } };
+struct Keybindings TRIANGLE = { .keycodes = { 'W', 'I' },
+								.buttons = { SDL_CONTROLLER_BUTTON_Y,
+											 SDL_CONTROLLER_BUTTON_DPAD_UP } };
 struct Keybindings SQUARE = { .keycodes = { 'A', 'J' },
-							  .buttons = { SDL_CONTROLLERBUTTON_X,
-										   SDL_CONTROLLERBUTTON_DPAD_LEFT } };
+							  .buttons = { SDL_CONTROLLER_BUTTON_X,
+										   SDL_CONTROLLER_BUTTON_DPAD_LEFT } };
 struct Keybindings CROSS = { .keycodes = { 'S', 'K' },
-							 .buttons = { SDL_CONTROLLERBUTTON_A,
-										  SDL_CONTROLLERBUTTON_DPAD_DOWN } };
-struct Keybindings CIRCLE = { .keycodes = { 'D', 'L' },
-							  .buttons = { SDL_CONTROLLERBUTTON_B,
-										   SDL_CONTROLLERBUTTON_DPAD_RIGHT } };
+							 .buttons = { SDL_CONTROLLER_BUTTON_A,
+										  SDL_CONTROLLER_BUTTON_DPAD_DOWN } };
+struct Keybindings CIRCLE
+	= { .keycodes = { 'D', 'L' },
+		.buttons
+		= { SDL_CONTROLLER_BUTTON_B, SDL_CONTROLLER_BUTTON_DPAD_RIGHT } };
 struct Keybindings LEFT_LEFT
 	= { .keycodes = { 'Q' }, .axis = { SDL_AXIS_LEFT_LEFT } };
 struct Keybindings LEFT_RIGHT
@@ -569,6 +542,8 @@ SetConfigValue (toml_table_t *table, char *key, struct Keybindings *keybind)
 		}
 
 	memset (keybind, 0, sizeof (*keybind));
+	for (int i = 0; i < COUNTOFARR (keybind->buttons); i++)
+		keybind->buttons[i] = SDL_CONTROLLER_BUTTON_INVALID;
 
 	for (int i = 0;; i++)
 		{
@@ -591,7 +566,8 @@ SetConfigValue (toml_table_t *table, char *key, struct Keybindings *keybind)
 				case button:
 					for (int i = 0; i < COUNTOFARR (keybind->buttons); i++)
 						{
-							if (keybind->buttons[i] == 0)
+							if (keybind->buttons[i]
+								== SDL_CONTROLLER_BUTTON_INVALID)
 								{
 									keybind->buttons[i] = value.button;
 									break;
@@ -735,8 +711,8 @@ KeyboardWasUp (BYTE keycode)
 }
 
 int deadzone = 8000;
-bool currentControllerButtonsState[SDL_CONTROLLERBUTTON_MAX];
-bool lastControllerButtonsState[SDL_CONTROLLERBUTTON_MAX];
+bool currentControllerButtonsState[SDL_CONTROLLER_BUTTON_MAX];
+bool lastControllerButtonsState[SDL_CONTROLLER_BUTTON_MAX];
 struct SDLAxisState currentControllerAxisState;
 struct SDLAxisState lastControllerAxisState;
 
@@ -744,7 +720,7 @@ void
 PollSDLInput ()
 {
 	memcpy (lastControllerButtonsState, currentControllerButtonsState,
-			SDL_CONTROLLERBUTTON_MAX);
+			SDL_CONTROLLER_BUTTON_MAX);
 	lastControllerAxisState = currentControllerAxisState;
 	memset (&currentControllerAxisState, 0,
 			sizeof (currentControllerAxisState));
@@ -787,7 +763,7 @@ PollSDLInput ()
 					break;
 				case SDL_CONTROLLERBUTTONUP:
 				case SDL_CONTROLLERBUTTONDOWN:
-					currentControllerButtonsState[event.cbutton.button + 1]
+					currentControllerButtonsState[event.cbutton.button]
 						= event.cbutton.state;
 					break;
 				case SDL_CONTROLLERAXISMOTION:
@@ -841,37 +817,37 @@ PollSDLInput ()
 }
 
 inline bool
-ControllerButtonIsDown (enum SDL_GameController_Button button)
+ControllerButtonIsDown (SDL_GameControllerButton button)
 {
 	return currentControllerButtonsState[button];
 }
 
 inline bool
-ControllerButtonIsUp (enum SDL_GameController_Button button)
+ControllerButtonIsUp (SDL_GameControllerButton button)
 {
 	return !ControllerButtonIsDown (button);
 }
 
 inline bool
-ControllerButtonWasDown (enum SDL_GameController_Button button)
+ControllerButtonWasDown (SDL_GameControllerButton button)
 {
 	return lastControllerButtonsState[button];
 }
 
 inline bool
-ControllerButtonWasUp (enum SDL_GameController_Button button)
+ControllerButtonWasUp (SDL_GameControllerButton button)
 {
 	return !ControllerButtonWasDown (button);
 }
 
 inline bool
-ControllerButtonIsTapped (enum SDL_GameController_Button button)
+ControllerButtonIsTapped (SDL_GameControllerButton button)
 {
 	return ControllerButtonIsDown (button) && ControllerButtonWasUp (button);
 }
 
 inline bool
-ControllerButtonIsReleased (enum SDL_GameController_Button button)
+ControllerButtonIsReleased (SDL_GameControllerButton button)
 {
 	return ControllerButtonIsUp (button) && ControllerButtonWasDown (button);
 }
@@ -1000,7 +976,7 @@ GetInternalButtonState (struct Keybindings bindings)
 		}
 	for (int i = 0; i < COUNTOFARR (ConfigControllerButtons); i++)
 		{
-			if (bindings.buttons[i] == 0)
+			if (bindings.buttons[i] == SDL_CONTROLLER_BUTTON_INVALID)
 				continue;
 			if (ControllerButtonIsReleased (bindings.buttons[i]))
 				buttons.Released = 1;
