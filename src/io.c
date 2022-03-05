@@ -2,6 +2,7 @@
 #include "io.h"
 #include "helpers.h"
 #include <SDL.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <toml.h>
@@ -26,6 +27,7 @@ void UpdateTouch ();
 
 void UpdateInputUnfocused ();
 void UpdateInput ();
+void UpdateDwGuiInput ();
 
 void SetSensor (int index, int value);
 
@@ -76,7 +78,7 @@ struct TouchSliderState
 	} SensorTouched[SLIDER_SENSORS];
 } * sliderState;
 
-enum JvsButtons
+enum JvsButtons : uint32_t
 {
 	JVS_NONE = 0 << 0x00,
 
@@ -308,7 +310,7 @@ struct MouseState
 	long MouseWheel;
 	bool ScrolledUp;
 	bool ScrolledDown;
-} currentMouseState;
+} currentMouseState, lastMouseState;
 
 struct TargetState
 {
@@ -323,6 +325,22 @@ struct TargetState
 	int32_t tgtHitState;
 	uint8_t padding460[0x48];
 } * targetStates;
+
+struct DwGuiDisplay
+{
+	void *vftable;
+	void *active;
+	void *cap;
+	void *on;
+	void *move;
+	void *widget;
+} * dwGuiDisplay;
+
+struct KeyBit
+{
+	uint32_t bit;
+	uint8_t keycode;
+};
 
 bool HasWindowFocus = false;
 bool currentKeyboardState[KEYBOARD_KEYS];
@@ -355,6 +373,21 @@ struct Keybindings RIGHT_LEFT
 	= { .keycodes = { 'U' }, .axis = { SDL_AXIS_RIGHT_LEFT } };
 struct Keybindings RIGHT_RIGHT
 	= { .keycodes = { 'O' }, .axis = { SDL_AXIS_RIGHT_RIGHT } };
+
+struct KeyBit keyBits[20] = {
+	{ 5, VK_LEFT },		{ 6, VK_RIGHT },
+
+	{ 29, VK_SPACE },	{ 39, 'A' },		{ 43, 'E' },
+	{ 42, 'D' },		{ 55, 'Q' },		{ 57, 'S' },
+	{ 61, 'W' },		{ 63, 'Y' },		{ 84, 'L' },
+
+	{ 80, VK_RETURN },	{ 81, VK_SHIFT },	{ 82, VK_CONTROL },
+	{ 83, VK_MENU },
+
+	{ 91, VK_UP },		{ 93, VK_DOWN },
+
+	{ 96, MK_LBUTTON }, { 97, VK_MBUTTON }, { 98, MK_RBUTTON },
+};
 
 SDL_Window *window;
 SDL_GameController *controllers[255];
@@ -415,11 +448,11 @@ InitializeIO (HWND DivaWindowHandle)
 		printf ("Error at SDL_CreateWindowFrom (DivaWindowHandle): %s\n",
 				SDL_GetError ());
 
-	sliderState = (struct TouchSliderState *)SLIDER_CTRL_TASK_ADDRESS;
-	inputState
-		= (struct InputState *)(*(uint64_t *)(void *)INPUT_STATE_PTR_ADDRESS);
-	currentTouchPanelState = (struct TouchPanelState *)TASK_TOUCH_ADDRESS;
-	targetStates = (struct TargetState *)TARGET_STATES_BASE_ADDRESS;
+	sliderState = (struct TouchSliderState *)0x14CC5DE40;
+	inputState = (struct InputState *)(*(uint64_t *)(void *)0x140EDA330);
+	currentTouchPanelState = (struct TouchPanelState *)0x14CC9EC30;
+	targetStates = (struct TargetState *)0x140D0B688;
+	dwGuiDisplay = (struct DwGuiDisplay *)*(uint64_t *)0x141190108;
 
 	ReadConfig ();
 }
@@ -446,30 +479,36 @@ UpdateIO (HWND DivaWindowHandle)
 			PollMouseInput (DivaWindowHandle);
 			UpdateInput ();
 			UpdateTouch ();
+			UpdateDwGuiInput ();
+
+			if (KeyboardIsDown (VK_ESCAPE))
+				*(bool *)0x140EDA6B0 = true;
+
+			if (dwGuiDisplay->on)
+				return;
 
 			/* Scrolling through menus */
-			int *slotsToScroll = (int *)PV_SEL_SLOTS_TO_SCROLL;
-			int *modulesToScroll = (int *)MODULE_SEL_SLOTS_TO_SCROLL;
+			int *slotsToScroll = (int *)0x14CC12470;
+			int *modulesToScroll = (int *)0x1418047EC;
+			int pvSlotsConst = *(int *)0x14CC119C8;
+			int moduleIsReccomended = *(int *)0x1418047E0;
 
 			if (IsMouseScrollUp)
 				{
-					if (*(int *)PV_SEL_SLOTS_CONST < 26)
+					if (pvSlotsConst < 26)
 						*slotsToScroll -= 1;
-					if (*(int *)MODULE_IS_RECOMMENDED == 0)
+					if (moduleIsReccomended == 0)
 						*modulesToScroll -= 1;
 					IsMouseScrollUp = false;
 				}
 			if (IsMouseScrollDown)
 				{
-					if (*(int *)PV_SEL_SLOTS_CONST < 26)
+					if (pvSlotsConst < 26)
 						*slotsToScroll += 1;
-					if (*(int *)MODULE_IS_RECOMMENDED == 0)
+					if (moduleIsReccomended == 0)
 						*modulesToScroll += 1;
 					IsMouseScrollDown = false;
 				}
-
-			if (KeyboardIsDown (VK_ESCAPE))
-				*(bool *)0x140EDA6B0 = true;
 		}
 	else if (HadWindowFocus)
 		{
@@ -478,10 +517,13 @@ UpdateIO (HWND DivaWindowHandle)
 			currentTouchPanelState->YPosition = 0.0f;
 			currentTouchPanelState->ContactType = 0;
 			currentTouchPanelState->Pressure = 0.0f;
-			inputState->MouseX = 0;
-			inputState->MouseY = 0;
 			inputState->Released.Buttons = 0;
 			inputState->Down.Buttons = 0;
+
+			inputState->MouseX = 0;
+			inputState->MouseY = 0;
+			inputState->MouseDeltaX = 0;
+			inputState->MouseDeltaY = 0;
 
 			int i;
 			for (i = 0; i < SLIDER_SENSORS; i++)
@@ -628,19 +670,20 @@ ReadConfig ()
 void
 PollMouseInput (HWND DivaWindowHandle)
 {
+	lastMouseState = currentMouseState;
+
 	GetCursorPos (&currentMouseState.Position);
 	currentMouseState.RelativePosition = currentMouseState.Position;
 
 	ScreenToClient (DivaWindowHandle, &currentMouseState.RelativePosition);
 
 	RECT hWindow;
-	if (GetClientRect (DivaWindowHandle, &hWindow) == 0)
-		return;
+	GetClientRect (DivaWindowHandle, &hWindow);
 
-	int *gameHeight = (int *)RESOLUTION_HEIGHT_ADDRESS;
-	int *gameWidth = (int *)RESOLUTION_WIDTH_ADDRESS;
-	int *fbWidth = (int *)FB_WIDTH_ADDRESS;
-	int *fbHeight = (int *)FB_HEIGHT_ADDRESS;
+	int *gameWidth = (int *)0x140EDA8BC;
+	int *gameHeight = (int *)0x140EDA8C0;
+	int *fbWidth = (int *)0x1411ABCA8;
+	int *fbHeight = (int *)0x1411ABCAC;
 
 	if ((fbWidth != gameWidth) && (fbHeight != gameHeight))
 		{
@@ -664,13 +707,6 @@ PollMouseInput (HWND DivaWindowHandle)
 			currentMouseState.RelativePosition.y
 				= currentMouseState.RelativePosition.y * *gameHeight
 				  / hWindow.bottom;
-
-			if (currentMouseState.RelativePosition.x > hWindow.right
-				|| currentMouseState.RelativePosition.x < 0)
-				currentMouseState.RelativePosition.x = 0;
-			if (currentMouseState.RelativePosition.y > hWindow.bottom
-				|| currentMouseState.RelativePosition.y < 0)
-				currentMouseState.RelativePosition.y = 0;
 		}
 }
 
@@ -941,6 +977,9 @@ ControllerAxisIsReleased (enum SDLAxis axis)
 void
 UpdateTouch ()
 {
+	if (dwGuiDisplay->active || dwGuiDisplay->on)
+		return;
+
 	currentTouchPanelState->XPosition
 		= (float)currentMouseState.RelativePosition.x;
 	currentTouchPanelState->YPosition
@@ -1122,10 +1161,10 @@ EndRumble ()
 void
 UpdateInput ()
 {
-	lastInputState = inputState->Down.Buttons;
+	if (dwGuiDisplay->active)
+		return;
 
-	inputState->MouseX = (int)currentMouseState.RelativePosition.x;
-	inputState->MouseY = (int)currentMouseState.RelativePosition.y;
+	lastInputState = inputState->Down.Buttons;
 
 	inputState->Tapped.Buttons = GetButtonsState (IsButtonDown);
 	inputState->Released.Buttons = GetButtonsState (IsButtonReleased);
@@ -1181,4 +1220,78 @@ UpdateInput ()
 				}
 		}
 	EndRumble ();
+}
+
+void
+SetInputStateBit (uint8_t *data, uint8_t bit, bool isPressed)
+{
+	data[bit / 8] = isPressed ? data[bit / 8] | 1 << (bit % 8)
+							  : data[bit / 8] & ~(1 << (bit % 8));
+}
+
+void
+UpdateDwGuiInput ()
+{
+	char keyState = 0;
+
+	char caseDiff = 'A' - 'a';
+	bool upperCase = KeyboardIsDown (VK_SHIFT);
+
+	for (char key = '0'; key < 'Z'; key++)
+		if (KeyboardIsTapped (key))
+			keyState = upperCase || key < 'A' ? key : key - caseDiff;
+
+	if (KeyboardIsTapped (VK_BACK))
+		keyState = VK_BACK;
+	if (KeyboardIsTapped (VK_TAB))
+		keyState = VK_TAB;
+	if (KeyboardIsTapped (VK_SPACE))
+		keyState = VK_SPACE;
+
+	inputState->MouseX = (int)currentMouseState.RelativePosition.x;
+	inputState->MouseY = (int)currentMouseState.RelativePosition.y;
+	inputState->MouseDeltaX
+		= currentMouseState.Position.x - lastMouseState.Position.x;
+	inputState->MouseDeltaY
+		= currentMouseState.Position.y - lastMouseState.Position.y;
+	inputState->Key = keyState;
+
+	for (int i = 0; i < COUNTOFARR (keyBits); i++)
+		{
+			SetInputStateBit ((uint8_t *)&inputState->Tapped, keyBits[i].bit,
+							  KeyboardIsTapped (keyBits[i].keycode));
+			SetInputStateBit ((uint8_t *)&inputState->Released, keyBits[i].bit,
+							  KeyboardIsReleased (keyBits[i].keycode));
+			SetInputStateBit ((uint8_t *)&inputState->Down, keyBits[i].bit,
+							  KeyboardIsDown (keyBits[i].keycode));
+			SetInputStateBit ((uint8_t *)&inputState->DoubleTapped,
+							  keyBits[i].bit,
+							  KeyboardIsTapped (keyBits[i].keycode));
+			SetInputStateBit ((uint8_t *)&inputState->IntervalTapped,
+							  keyBits[i].bit,
+							  KeyboardIsTapped (keyBits[i].keycode));
+		}
+
+	SetInputStateBit ((uint8_t *)&inputState->Tapped, 99, IsMouseScrollUp);
+	SetInputStateBit ((uint8_t *)&inputState->Released, 99, IsMouseScrollUp);
+	SetInputStateBit ((uint8_t *)&inputState->Down, 99, IsMouseScrollUp);
+	SetInputStateBit ((uint8_t *)&inputState->DoubleTapped, 99,
+					  IsMouseScrollUp);
+	SetInputStateBit ((uint8_t *)&inputState->IntervalTapped, 99,
+					  IsMouseScrollUp);
+
+	SetInputStateBit ((uint8_t *)&inputState->Tapped, 100, IsMouseScrollDown);
+	SetInputStateBit ((uint8_t *)&inputState->Released, 100,
+					  IsMouseScrollDown);
+	SetInputStateBit ((uint8_t *)&inputState->Down, 100, IsMouseScrollDown);
+	SetInputStateBit ((uint8_t *)&inputState->DoubleTapped, 100,
+					  IsMouseScrollDown);
+	SetInputStateBit ((uint8_t *)&inputState->IntervalTapped, 100,
+					  IsMouseScrollDown);
+
+	if (dwGuiDisplay->on)
+		{
+			IsMouseScrollUp = false;
+			IsMouseScrollDown = false;
+		}
 }

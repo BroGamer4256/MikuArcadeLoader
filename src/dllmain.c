@@ -1,9 +1,7 @@
-#include "constants.h"
 #include "helpers.h"
 #include "io.h"
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <windows.h>
 
 void UpdateFastLoader ();
@@ -26,9 +24,9 @@ Initialize ()
 
 	/* Enable use_card */
 	WRITE_MEMORY (0x1411A8850, uint8_t, 0x01);
+	/* Enable modifiers */
 	WRITE_MEMORY (0x1411A9685, uint8_t, 0x01);
-	WRITE_MEMORY (0x1411A8B00, uint8_t, 0x01);
-	/* Allow selecting modules */
+	/* Allow selecting modules and items */
 	WRITE_MEMORY (0x1405869AD, uint8_t, 0xB0, 0x01);
 	WRITE_MEMORY (0x140583B45, uint8_t, 0x85);
 	WRITE_MEMORY (0x140583C8C, uint8_t, 0x85);
@@ -47,18 +45,18 @@ HOOK (void, __stdcall, Update, 0x14018CC40)
 	UpdateFastLoader ();
 }
 
-FUNCTION_PTR (void, __stdcall, UpdateTask, UPDATE_TASKS_ADDRESS);
+FUNCTION_PTR (void, __stdcall, UpdateTask, 0x14019B980);
 void
 UpdateFastLoader ()
 {
-	if (*(uint32_t *)CURRENT_GAME_STATE_ADDRESS != 0)
+	if (*(uint32_t *)0x140EDA810 != 0)
 		return;
 
 	for (int i = 0; i < 3; i++)
 		UpdateTask ();
 
-	*(int *)DATA_INIT_STATE_ADDRESS = 3;
-	*(int *)SYSTEM_WARNING_ELAPSED_ADDRESS = 3939;
+	*(int *)0x140EDA7A8 = 3;
+	*(int *)0x1411A1498 = 3939;
 }
 
 void
@@ -68,22 +66,19 @@ UpdateScale (HWND DivaWindowHandle)
 	if (GetClientRect (DivaWindowHandle, &hWindow) == 0)
 		return;
 
-	*(float *)UI_ASPECT_RATIO = (float)hWindow.right / (float)hWindow.bottom;
-	*(double *)FB_ASPECT_RATIO
-		= (double)hWindow.right / (double)hWindow.bottom;
-	*(float *)UI_WIDTH_ADDRESS = hWindow.right;
-	*(float *)UI_HEIGHT_ADDRESS = hWindow.bottom;
-	*(int *)FB1_WIDTH_ADDRESS = hWindow.right;
-	*(int *)FB1_HEIGHT_ADDRESS = hWindow.bottom;
+	*(float *)0x14CC621D0 = (float)hWindow.right / (float)hWindow.bottom;
+	*(float *)0x14CC621E4 = hWindow.right;
+	*(float *)0x14CC621E8 = hWindow.bottom;
+	*(double *)0x140FBC2E8 = (double)hWindow.right / (double)hWindow.bottom;
+	*(int *)0x1411AD5F8 = hWindow.right;
+	*(int *)0x1411AD5FC = hWindow.bottom;
 
-	*(int *)0x00000001411AD608 = 0;
-
-	*(int *)0x0000000140EDA8E4 = *(int *)0x0000000140EDA8BC;
-	*(int *)0x0000000140EDA8E8 = *(int *)0x0000000140EDA8C0;
-
-	*(float *)0x00000001411A1900 = 0;
-	*(float *)0x00000001411A1904 = *(int *)0x0000000140EDA8BC;
-	*(float *)0x00000001411A1908 = *(int *)0x0000000140EDA8C0;
+	*(int *)0x1411AD608 = 0;
+	*(int *)0x140EDA8E4 = *(int *)0x140EDA8BC;
+	*(int *)0x140EDA8E8 = *(int *)0x140EDA8C0;
+	*(float *)0x1411A1900 = 0;
+	*(float *)0x1411A1904 = *(int *)0x140EDA8BC;
+	*(float *)0x1411A1908 = *(int *)0x140EDA8C0;
 }
 
 void
@@ -100,7 +95,8 @@ ApplyPatches ()
 	/* Write ram files to ram/ instead of Y:/SBZV/ram/ */
 	WRITE_MEMORY (0x14066CF09, uint8_t, 0xE9, 0xD8, 0x00);
 	/* Change mdata path from "C:/Mount/Option" to "mdata/" */
-	WRITE_MEMORY (0x140A8CA18, uint8_t, 'm', 'd', 'a', 't', 'a', '/', '\0');
+	WRITE_MEMORY (0x140A8CA18, uint8_t, "mdata/");
+	/* Length of string at 0x140A8CA18 */
 	WRITE_MEMORY (0x14066CEAE, uint8_t, 0x06);
 	/* Skip parts of the network check state */
 	WRITE_MEMORY (0x1406717B1, uint8_t, 0xE9, 0x22, 0x03, 0x00);

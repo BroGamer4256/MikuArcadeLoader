@@ -1,5 +1,3 @@
-#include "constants.h"
-#include <stdbool.h>
 #include <windows.h>
 
 void UpdateIO (HWND DivaWindowHandle);
