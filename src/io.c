@@ -1166,9 +1166,9 @@ UpdateInput ()
 
 	lastInputState = inputState->Down.Buttons;
 
-	inputState->Tapped.Buttons = GetButtonsState (IsButtonDown);
+	inputState->Tapped.Buttons = GetButtonsState (IsButtonTapped);
 	inputState->Released.Buttons = GetButtonsState (IsButtonReleased);
-	inputState->Down.Buttons = GetButtonsState (IsButtonTapped);
+	inputState->Down.Buttons = GetButtonsState (IsButtonDown);
 	inputState->DoubleTapped.Buttons = GetButtonsState (IsButtonTapped);
 	inputState->IntervalTapped.Buttons = GetButtonsState (IsButtonTapped);
 
