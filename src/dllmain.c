@@ -136,6 +136,17 @@ HOOK (float, __stdcall, GetFrameSpeed, 0x140192D50)
 	return speed_rounded;
 }
 
+int32_t internalResX;
+int32_t internalResY;
+
+HOOK (int64_t, __fastcall, ParseParameters, 0x140193630, int32_t a1,
+	  int64_t *a2)
+{
+	if (internalResX != 0 && internalResY != 0)
+		*(uint32_t *)0x140EDA5D4 = 15;
+	return originalParseParameters (a1, a2);
+}
+
 FUNCTION_PTR (void, __stdcall, UpdateTask, 0x14019B980);
 void
 UpdateFastLoader ()
@@ -328,9 +339,9 @@ DllMain (HMODULE mod, DWORD cause, void *ctx)
 			return 1;
 		}
 
-	int32_t internalResX = readConfigInt (internalResSection, "x", 0);
-	int32_t internalResY = readConfigInt (internalResSection, "y", 0);
-	if (internalResX && internalResY)
+	internalResX = readConfigInt (internalResSection, "x", 0);
+	internalResY = readConfigInt (internalResSection, "y", 0);
+	if (internalResX != 0 && internalResY != 0)
 		{
 			if (internalResX == -1 || internalResY == -1)
 				{
@@ -340,6 +351,7 @@ DllMain (HMODULE mod, DWORD cause, void *ctx)
 
 			WRITE_MEMORY (0x1409B8B68, int32_t, internalResX, internalResY);
 		}
+	INSTALL_HOOK (ParseParameters);
 
 	toml_free (config);
 
