@@ -2,10 +2,7 @@
 #include "io.h"
 #include "helpers.h"
 #include <SDL.h>
-#include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
-#include <toml.h>
 
 bool IsMouseScrollUp = false;
 bool IsMouseScrollDown = false;
@@ -392,17 +389,6 @@ struct KeyBit keyBits[20] = {
 SDL_Window *window;
 SDL_GameController *controllers[255];
 
-char *
-configPath (char *name)
-{
-	static char buffer[MAX_PATH];
-	GetModuleFileNameA (NULL, buffer, MAX_PATH);
-	*strrchr (buffer, '\\') = 0;
-	strcat (buffer, "\\plugins\\");
-	strcat (buffer, name);
-	return buffer;
-}
-
 void
 InitializeIO (HWND DivaWindowHandle)
 {
@@ -636,21 +622,9 @@ SetConfigValue (toml_table_t *table, char *key, struct Keybindings *keybind)
 void
 ReadConfig ()
 {
-	FILE *file = fopen (configPath ("keyconfig.toml"), "r");
-	if (!file)
-		{
-			printf ("Error at ReadConfig (): cannot open keyconfig.toml\n");
-			return;
-		}
-	char errorbuf[200];
-	toml_table_t *config = toml_parse_file (file, errorbuf, 200);
-	fclose (file);
-
+	toml_table_t *config = openConfig (configPath ("keyconfig.toml"));
 	if (!config)
-		{
-			printf ("Error at ReadConfig (): %s\n", errorbuf);
-			return;
-		}
+		return;
 
 	SetConfigValue (config, "TEST", &TEST);
 	SetConfigValue (config, "SERVICE", &SERVICE);

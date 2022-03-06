@@ -1,0 +1,28 @@
+name = "Example"
+author = "Brogamer"
+enabled = false
+
+# Enable freeplay
+[[patch]]
+address = 0x1403BABEA
+data = 0x75
+data_type = "u8"
+
+# Patch freeplay text to Miku
+[[patch]]
+address = 0x1409F61F0
+data = "Miku"
+data_type = "string"
+
+# Change text colour to blue
+[[patch]]
+address = 0x1401964A2
+data = [ 0x00, 0xFF, 0xFF, 0x7F ]
+data_type = "u8_arr"
+
+# Data Types
+# i8, i8_arr, u8, u8_arr
+# i16, i16_arr, u16, u16_arr
+# i32, i32_arr, u32, u32_arr
+# i64, i64_arr
+# string

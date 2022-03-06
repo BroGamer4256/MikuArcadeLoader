@@ -1,5 +1,8 @@
 #pragma once
 #include <MinHook.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <toml.h>
 
 #define FUNCTION_PTR(returnType, callingConvention, function, location, ...)  \
 	returnType (callingConvention *function) (__VA_ARGS__)                    \
@@ -23,6 +26,8 @@
 		MH_EnableHook ((void *)where##functionName);                          \
 	}
 
+#define READ_MEMORY(location, type) *(type *)location
+
 #define WRITE_MEMORY(location, type, ...)                                     \
 	{                                                                         \
 		const type data[] = { __VA_ARGS__ };                                  \
@@ -32,6 +37,15 @@
 		memcpy ((void *)(location), data, sizeof (data));                     \
 		VirtualProtect ((void *)(location), sizeof (data), oldProtect,        \
 						&oldProtect);                                         \
+	}
+
+#define WRITE_MEMORY_STRING(location, data, length)                           \
+	{                                                                         \
+		DWORD oldProtect;                                                     \
+		VirtualProtect ((void *)(location), length, PAGE_EXECUTE_READWRITE,   \
+						&oldProtect);                                         \
+		memcpy ((void *)(location), data, length);                            \
+		VirtualProtect ((void *)(location), length, oldProtect, &oldProtect); \
 	}
 
 #define WRITE_NOP(location, count)                                            \
@@ -57,3 +71,10 @@
 	}
 
 #define COUNTOFARR(arr) sizeof (arr) / sizeof (arr[0])
+
+char *configPath (char *name);
+toml_table_t *openConfig (char *configFilePath);
+toml_table_t *openConfigSection (toml_table_t *config, char *sectionName);
+bool readConfigBool (toml_table_t *table, char *key, bool notFoundValue);
+int64_t readConfigInt (toml_table_t *table, char *key, int64_t notFoundValue);
+char *readConfigString (toml_table_t *table, char *key, char *notFoundValue);

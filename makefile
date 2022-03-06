@@ -2,7 +2,7 @@ OUT = MAL
 CC := clang
 TARGET := x86_64-pc-windows-gnu
 SDL_TARGET := x86_64-w64-mingw32
-SRC = src/dllmain.c src/io.c tomlc99/toml.c minhook/src/buffer.c minhook/src/hook.c minhook/src/trampoline.c minhook/src/hde/hde32.c minhook/src/hde/hde64.c
+SRC = src/dllmain.c src/io.c src/helpers.c tomlc99/toml.c minhook/src/buffer.c minhook/src/hook.c minhook/src/trampoline.c minhook/src/hde/hde32.c minhook/src/hde/hde64.c
 OBJ = ${addprefix ${TARGET}/,${SRC:.c=.o}}
 CFLAGS = -std=c99 -Iminhook/include -ISDL/include -Itomlc99 -Wall -Ofast -target ${TARGET} -DWIN32_LEAN_AND_MEAN -D_WIN32_WINNT=_WIN32_WINNT_WIN7
 LDFLAGS := -shared -static -static-libgcc -s

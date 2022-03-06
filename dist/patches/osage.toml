@@ -1,0 +1,13 @@
+name = "No OPD"
+author = "Skyth"
+enabled = true
+
+[[patch]]
+address = 0x1404728C0
+data = 0xC3
+data_type = "u8"
+
+[[patch]]
+address = 0x1404789C3
+data = 0x0D
+data_type = "u8"
