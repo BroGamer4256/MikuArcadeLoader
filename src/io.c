@@ -687,41 +687,38 @@ Update2DIO ()
 					ChangeSubState (3, selectionIndex);
 				}
 
-			struct FontInfo *fontInfo = malloc (sizeof (struct FontInfo));
-			fontInfo = GetFontInfoFromID (fontInfo, 0x11);
+			struct FontInfo fontInfo;
+			fontInfo = *GetFontInfoFromID (&fontInfo, 0x11);
 
-			struct DrawParams *drawParam = malloc (sizeof (struct DrawParams));
-			drawParam->colour = 0xFFFFFFFF;
-			drawParam->fillColour = 0xFF808080;
-			drawParam->clip = 0;
-			drawParam->clipRectX = 0;
-			drawParam->clipRectY = 0;
-			drawParam->clipRectWidth = 0;
-			drawParam->clipRectHeight = 0;
-			drawParam->layer = 0x19;
-			drawParam->unk20 = 0;
-			drawParam->unk24 = 0xD;
-			drawParam->unk28 = 0;
-			drawParam->textCurrentLocX = (1280 / 2) - 100;
-			drawParam->textCurrentLocY
+			struct DrawParams drawParam;
+			drawParam.colour = 0xFFFFFFFF;
+			drawParam.fillColour = 0xFF808080;
+			drawParam.clip = 0;
+			drawParam.clipRectX = 0;
+			drawParam.clipRectY = 0;
+			drawParam.clipRectWidth = 0;
+			drawParam.clipRectHeight = 0;
+			drawParam.layer = 0x19;
+			drawParam.unk20 = 0;
+			drawParam.unk24 = 0xD;
+			drawParam.unk28 = 0;
+			drawParam.textCurrentLocX = (1280 / 2) - 100;
+			drawParam.textCurrentLocY
 				= (720 / 2) - COUNTOFARR (DataTestNames) / 2 * 24;
-			drawParam->lineOriginLocX = 0;
-			drawParam->lineOriginLocY = 0;
-			drawParam->lineLength = 0;
-			drawParam->font = fontInfo;
-			drawParam->unk50 = 0x25A1;
+			drawParam.lineOriginLocX = 0;
+			drawParam.lineOriginLocY = 0;
+			drawParam.lineLength = 0;
+			drawParam.font = &fontInfo;
+			drawParam.unk50 = 0x25A1;
 
 			for (int i = 0; i < COUNTOFARR (DataTestNames); i++)
 				{
 					char buf[32];
 					sprintf (buf, "%s\n", DataTestNames[i]);
-					drawParam->colour
+					drawParam.colour
 						= (i == selectionIndex - 20 ? 0xFF00FFFF : 0xFFFFFFFF);
-					DivaDrawText (drawParam, 0x1005, buf, 32);
+					DivaDrawText (&drawParam, 0x1005, buf, 32);
 				}
-
-			free (drawParam);
-			free (fontInfo);
 		}
 }
 
