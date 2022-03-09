@@ -138,12 +138,16 @@ HOOK (float, __stdcall, GetFrameSpeed, 0x140192D50)
 
 int32_t internalResX;
 int32_t internalResY;
+bool fullscreen = true;
 
 HOOK (int64_t, __fastcall, ParseParameters, 0x140193630, int32_t a1,
 	  int64_t *a2)
 {
 	if (internalResX != 0 && internalResY != 0)
 		*(uint32_t *)0x140EDA5D4 = 15;
+
+	*(bool *)0x140EDA5D1 = fullscreen;
+
 	return originalParseParameters (a1, a2);
 }
 
@@ -351,10 +355,12 @@ DllMain (HMODULE mod, DWORD cause, void *ctx)
 
 			WRITE_MEMORY (0x1409B8B68, int32_t, internalResX, internalResY);
 		}
+	fullscreen = readConfigBool (config, "fullscreen", true);
 	INSTALL_HOOK (ParseParameters);
 
 	toml_free (config);
 
+	/* Load external patches */
 	WIN32_FIND_DATAA fd;
 	HANDLE file = FindFirstFileA (configPath ("patches\\*.toml"), &fd);
 	if (file == 0)

@@ -1,2 +1,3 @@
 fps = 0
 internalRes = { x = 1280, y = 720 }
+fullscreen = true

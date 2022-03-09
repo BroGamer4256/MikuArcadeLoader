@@ -1,0 +1,13 @@
+name = "Disable movies"
+author = "nas"
+enabled = false
+
+[[patch]]
+address = 0x00000001404EB584
+data = [ 0x48, 0xE9 ]
+data_type = "u8_arr"
+
+[[patch]]
+address = 0x00000001404EB471
+data = [ 0x48, 0xE9 ]
+data_type = "u8_arr"
