@@ -116,6 +116,7 @@ HOOK (void, __cdecl, Update2D, 0x0140501F70, void *a1)
 {
 	fspeed_error = fspeed_error_next;
 	fspeed_error_next = 0;
+	Update2DIO ();
 	originalUpdate2D (a1);
 }
 
@@ -280,6 +281,8 @@ ApplyPatches ()
 	WRITE_MEMORY (0x1404ACD2B, uint8_t, 0x44, 0x8B, 0x05, 0xC6, 0x08, 0xD0,
 				  0x00);
 	WRITE_NOP (0x1405030A0, 6);
+	/* Prevent DATA_TEST from exiting */
+	WRITE_NULL (0x140284B01, 1);
 }
 
 #define WRITE_MEMORY_CONFIG_STRING(address, table)                            \

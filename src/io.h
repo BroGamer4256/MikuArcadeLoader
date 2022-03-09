@@ -1,5 +1,6 @@
 #include <windows.h>
 
-void UpdateIO (HWND DivaWindowHandle);
 void InitializeIO (HWND DivaWindowHandle);
+void UpdateIO (HWND DivaWindowHandle);
+void Update2DIO ();
 void DiposeIO ();

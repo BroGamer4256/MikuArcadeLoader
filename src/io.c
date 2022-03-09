@@ -257,6 +257,8 @@ struct Keybindings
 	enum SDLAxis axis[COUNTOFARR (ConfigControllerAXIS)];
 };
 
+bool IsButtonTapped (struct Keybindings bindings);
+
 enum EnumType
 {
 	none,
@@ -360,14 +362,82 @@ struct Camera
 	float VerticalFov;
 } * camera;
 
+struct RawFont
+{
+	uint32_t sprId;
+	uint8_t width1;
+	uint8_t height1;
+	uint8_t width2;
+	uint8_t height2;
+	uint8_t layoutParam2Num;
+	uint8_t layoutParam2Div;
+	uint8_t padding0a[0x02];
+	int32_t fontmapId;
+	float layoutParam2NumOverDiv;
+	uint8_t padding14[0x04];
+	uint64_t texWidthChars;
+	int64_t dataBegin;
+	int64_t dataEnd;
+	int64_t dataCapacityEnd;
+	uint8_t layoutParam1;
+	uint8_t padding39[0x7];
+};
+
+struct FontInfo
+{
+	uint32_t fontId;
+	uint8_t padding04[0x4];
+	struct RawFont *rawfont;
+	uint16_t flag10;
+	uint8_t padding12[0x02];
+	float width1;
+	float height1;
+	float width2;
+	float height2;
+	float userSizeWidth;
+	float userSizeHeight;
+	float userSizeWidthMultiplier;
+	float userSizeHeightMultiplier;
+	float spacingWidth;
+	float spacingHeight;
+};
+
+struct DrawParams
+{
+	uint32_t colour;
+	uint32_t fillColour;
+	uint8_t clip;
+	uint8_t unk09[0x3];
+	float clipRectX;
+	float clipRectY;
+	float clipRectWidth;
+	float clipRectHeight;
+	uint32_t layer;
+	uint32_t unk20;
+	uint32_t unk24;
+	uint32_t unk28;
+	float textCurrentLocX;
+	float textCurrentLocY;
+	float lineOriginLocX;
+	float lineOriginLocY;
+	uint8_t padding3c[0x4];
+	uint64_t lineLength;
+	struct FontInfo *font;
+	uint16_t unk50;
+};
+
 bool HasWindowFocus = false;
 bool currentKeyboardState[KEYBOARD_KEYS];
 bool lastKeyboardState[KEYBOARD_KEYS];
 
-struct Keybindings TEST
-	= { .keycodes = { VK_F1 }, .buttons = { SDL_CONTROLLER_BUTTON_INVALID } };
-struct Keybindings SERVICE
-	= { .keycodes = { VK_F2 }, .buttons = { SDL_CONTROLLER_BUTTON_INVALID } };
+struct Keybindings TEST = { .keycodes = { VK_F1 } };
+struct Keybindings SERVICE = { .keycodes = { VK_F2 } };
+struct Keybindings ADVERTISE = { .keycodes = { VK_F4 } };
+struct Keybindings GAME = { .keycodes = { VK_F5 } };
+struct Keybindings DATA_TEST = { .keycodes = { VK_F6 } };
+struct Keybindings TEST_MODE = { .keycodes = { VK_F7 } };
+struct Keybindings APP_ERROR = { .keycodes = { VK_F8 } };
+
 struct Keybindings START = { .keycodes = { VK_RETURN },
 							 .buttons = { SDL_CONTROLLER_BUTTON_START } };
 struct Keybindings TRIANGLE = { .keycodes = { 'W', 'I' },
@@ -567,14 +637,91 @@ UpdateIO (HWND DivaWindowHandle)
 			inputState->MouseDeltaX = 0;
 			inputState->MouseDeltaY = 0;
 
-			int i;
-			for (i = 0; i < SLIDER_SENSORS; i++)
+			for (int i = 0; i < SLIDER_SENSORS; i++)
 				SetSensor (i, SLIDER_NO_PRESSURE);
-			for (i = 0; i < SLIDER_CONTACT_POINTS; i++)
+			for (int i = 0; i < SLIDER_CONTACT_POINTS; i++)
 				{
 					sliderState->SectionTouched[i] = false;
 					sliderState->SectionPositions[i] = 0.0f;
 				}
+		}
+}
+
+bool ShouldDrawTestMenu = false;
+int selectionIndex = 20;
+FUNCTION_PTR (void, __stdcall, ChangeSubState, 0x140195260, uint32_t,
+			  uint32_t);
+FUNCTION_PTR (void, __stdcall, DivaDrawText, 0x140198500, struct DrawParams *,
+			  uint32_t, const char *, int64_t);
+FUNCTION_PTR (struct FontInfo *, __thiscall, GetFontInfoFromID, 0x140196510,
+			  struct FontInfo *, uint32_t);
+const char *DataTestNames[] = {
+	"MAIN TEST",	 "MISC TEST",	   "OBJECT TEST",	"STAGE TEST",
+	"MOTION TEST",	 "COLLISION TEST", "SPRITE TEST",	"2DAUTH TEST",
+	"3DAUTH TEST",	 "CHARA TEST",	   "ITEM TEST",		"PERFORMANCE TEST",
+	"PVSCRIPT TEST", "PRINT TEST",	   "CARD TEST",		"OPD TEST",
+	"SLIDER TEST",	 "GLITTER TEST",   "GRAPHICS TEST", "COLLECTION CARD TEST",
+};
+void
+Update2DIO ()
+{
+	if (ShouldDrawTestMenu)
+		{
+			struct Keybindings UPARROW = { .keycodes = { VK_UP } };
+			struct Keybindings DOWNARROW = { .keycodes = { VK_DOWN } };
+			struct Keybindings ENTER = { .keycodes = { VK_RETURN } };
+
+			if (IsButtonTapped (UPARROW))
+				selectionIndex--;
+			if (IsButtonTapped (DOWNARROW))
+				selectionIndex++;
+
+			if (selectionIndex > 39)
+				selectionIndex = 20;
+			if (selectionIndex < 20)
+				selectionIndex = 39;
+
+			if (IsButtonTapped (ENTER))
+				{
+					ShouldDrawTestMenu = false;
+					ChangeSubState (3, selectionIndex);
+				}
+
+			struct FontInfo *fontInfo = malloc (sizeof (struct FontInfo));
+			fontInfo = GetFontInfoFromID (fontInfo, 0x11);
+
+			struct DrawParams *drawParam = malloc (sizeof (struct DrawParams));
+			drawParam->colour = 0xFFFFFFFF;
+			drawParam->fillColour = 0xFF808080;
+			drawParam->clip = 0;
+			drawParam->clipRectX = 0;
+			drawParam->clipRectY = 0;
+			drawParam->clipRectWidth = 0;
+			drawParam->clipRectHeight = 0;
+			drawParam->layer = 0x19;
+			drawParam->unk20 = 0;
+			drawParam->unk24 = 0xD;
+			drawParam->unk28 = 0;
+			drawParam->textCurrentLocX = (1280 / 2) - 100;
+			drawParam->textCurrentLocY
+				= (720 / 2) - COUNTOFARR (DataTestNames) / 2 * 24;
+			drawParam->lineOriginLocX = 0;
+			drawParam->lineOriginLocY = 0;
+			drawParam->lineLength = 0;
+			drawParam->font = fontInfo;
+			drawParam->unk50 = 0x25A1;
+
+			for (int i = 0; i < COUNTOFARR (DataTestNames); i++)
+				{
+					char buf[32];
+					sprintf (buf, "%s\n", DataTestNames[i]);
+					drawParam->colour
+						= (i == selectionIndex - 20 ? 0xFF00FFFF : 0xFFFFFFFF);
+					DivaDrawText (drawParam, 0x1005, buf, 32);
+				}
+
+			free (drawParam);
+			free (fontInfo);
 		}
 }
 
@@ -684,6 +831,12 @@ ReadConfig ()
 
 	SetConfigValue (config, "TEST", &TEST);
 	SetConfigValue (config, "SERVICE", &SERVICE);
+	SetConfigValue (config, "ADVERTISE", &ADVERTISE);
+	SetConfigValue (config, "GAME", &GAME);
+	SetConfigValue (config, "DATA_TEST", &DATA_TEST);
+	SetConfigValue (config, "TEST_MODE", &TEST_MODE);
+	SetConfigValue (config, "APP_ERROR", &APP_ERROR);
+
 	SetConfigValue (config, "START", &START);
 	SetConfigValue (config, "TRIANGLE", &TRIANGLE);
 	SetConfigValue (config, "SQUARE", &SQUARE);
@@ -802,8 +955,6 @@ PollSDLInput ()
 	memcpy (lastControllerButtonsState, currentControllerButtonsState,
 			SDL_CONTROLLER_BUTTON_MAX);
 	lastControllerAxisState = currentControllerAxisState;
-	// memset (&currentControllerAxisState, 0,
-	//		sizeof (currentControllerAxisState));
 
 	SDL_Event event;
 	while (SDL_PollEvent (&event) != 0)
@@ -1232,6 +1383,7 @@ EndRumble ()
 		}
 }
 
+FUNCTION_PTR (void, __stdcall, ChangeGameState, 0x1401953D0, uint32_t);
 void
 UpdateInput ()
 {
@@ -1258,6 +1410,20 @@ UpdateInput ()
 
 	for (int i = 0; i < SLIDER_CONTACT_POINTS; i++)
 		ApplyContactPoint (ContactPoints[i], i);
+
+	if (IsButtonDown (ADVERTISE))
+		ChangeGameState (1);
+	if (IsButtonDown (GAME))
+		ChangeGameState (2);
+	if (IsButtonDown (DATA_TEST))
+		{
+			ShouldDrawTestMenu = true;
+			ChangeGameState (3);
+		}
+	if (IsButtonDown (TEST_MODE))
+		ChangeGameState (4);
+	if (IsButtonDown (APP_ERROR))
+		ChangeGameState (5);
 
 	// Update rumble
 	bool isSliderTouched = false;

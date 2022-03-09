@@ -1,5 +1,10 @@
 TEST = ["F1"]
 SERVICE = ["F2"]
+ADVERTISE = ["F4"]
+GAME = ["F5"]
+DATA_TEST = ["F6"]
+TEST_MODE = ["F7"]
+APP_ERROR = ["F8"]
 
 START = ["ENTER", "SDL_START"]
 TRIANGLE = ["W", "I", "SDL_Y", "SDL_DPAD_UP"]
