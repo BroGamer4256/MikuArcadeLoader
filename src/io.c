@@ -7,50 +7,17 @@
 
 bool IsMouseScrollUp = false;
 bool IsMouseScrollDown = false;
-
 bool unlockedCamera = false;
-
-void ReadConfig ();
-
-void PollMouseInput ();
-
-bool KeyboardIsDown (BYTE keycode);
-bool KeyboardIsUp (BYTE keycode);
-bool KeyboardIsTapped (BYTE keycode);
-bool KeyboardIsReleased (BYTE keycode);
-bool KeyboardWasDown (BYTE keycode);
-bool KeyboardWasUp (BYTE keycode);
-
-void PollSDLInput ();
-
-void UpdateTouch ();
-
-void UpdateInputUnfocused ();
-void UpdateInput ();
-void UpdateDwGuiInput ();
-void UpdateUnlockedCamera (HWND DivaWindowHandle);
-
-void SetSensor (int index, int value);
-
-#define KEYBOARD_KEYS 0xFF
-
-#define SLIDER_OK 3
-#define SLIDER_SECTIONS 4
-#define SLIDER_SENSORS 32
-
-#define SLIDER_NO_PRESSURE 0
-#define SLIDER_FULL_PRESSURE 180
-
-#define SLIDER_INPUTS 4
-#define SLIDER_CONTACT_POINTS 2
-
-#define MAX_BUTTON_BIT 0x6F
+bool HasWindowFocus = false;
+bool currentKeyboardState[0xFF];
+bool lastKeyboardState[0xFF];
+int rumbleIntensity = 8000;
 
 struct ContactPoint
 {
 	float Position;
 	bool InContact;
-} ContactPoints[SLIDER_CONTACT_POINTS];
+} ContactPoints[2];
 
 struct TouchSliderState
 {
@@ -60,14 +27,14 @@ struct TouchSliderState
 
 	uint8_t Padding0074[20 + 12];
 
-	int32_t SensorPressureLevels[SLIDER_SENSORS];
+	int32_t SensorPressureLevels[32];
 
 	uint8_t Padding0108[52 - 12];
 
-	float SectionPositions[SLIDER_SECTIONS];
-	int SectionConnections[SLIDER_SECTIONS];
+	float SectionPositions[4];
+	int SectionConnections[4];
 	uint8_t Padding015C[4];
-	bool SectionTouched[SLIDER_SECTIONS];
+	bool SectionTouched[4];
 
 	uint8_t Padding013C[3128 - 52 - 40];
 
@@ -76,7 +43,7 @@ struct TouchSliderState
 		uint8_t Padding00[2];
 		bool IsTouched;
 		uint8_t Padding[45];
-	} SensorTouched[SLIDER_SENSORS];
+	} SensorTouched[32];
 } * sliderState;
 
 enum JvsButtons : uint32_t
@@ -257,8 +224,6 @@ struct Keybindings
 	enum SDLAxis axis[COUNTOFARR (ConfigControllerAXIS)];
 };
 
-bool IsButtonTapped (struct Keybindings bindings);
-
 enum EnumType
 {
 	none,
@@ -426,9 +391,24 @@ struct DrawParams
 	uint16_t unk50;
 };
 
-bool HasWindowFocus = false;
-bool currentKeyboardState[KEYBOARD_KEYS];
-bool lastKeyboardState[KEYBOARD_KEYS];
+bool IsButtonTapped (struct Keybindings bindings);
+void PollMouseInput ();
+bool KeyboardIsDown (BYTE keycode);
+bool KeyboardIsUp (BYTE keycode);
+bool KeyboardIsTapped (BYTE keycode);
+bool KeyboardIsReleased (BYTE keycode);
+bool KeyboardWasDown (BYTE keycode);
+bool KeyboardWasUp (BYTE keycode);
+void PollSDLInput ();
+void SetConfigValue (toml_table_t *table, char *key,
+					 struct Keybindings *keybind);
+void UpdateTouch ();
+void UpdateInputUnfocused ();
+void UpdateInput ();
+void UpdateDwGuiInput ();
+void UpdateUnlockedCamera (HWND DivaWindowHandle);
+void SetSensor (int index, int value);
+void EndRumble ();
 
 struct Keybindings TEST = { .keycodes = { VK_F1 } };
 struct Keybindings SERVICE = { .keycodes = { VK_F2 } };
@@ -512,6 +492,53 @@ SDL_GameController *controllers[255];
 void
 InitializeIO (HWND DivaWindowHandle)
 {
+	toml_table_t *config = openConfig (configPath ("keyconfig.toml"));
+	if (!config)
+		return;
+
+	SetConfigValue (config, "TEST", &TEST);
+	SetConfigValue (config, "SERVICE", &SERVICE);
+	SetConfigValue (config, "ADVERTISE", &ADVERTISE);
+	SetConfigValue (config, "GAME", &GAME);
+	SetConfigValue (config, "DATA_TEST", &DATA_TEST);
+	SetConfigValue (config, "TEST_MODE", &TEST_MODE);
+	SetConfigValue (config, "APP_ERROR", &APP_ERROR);
+
+	SetConfigValue (config, "START", &START);
+	SetConfigValue (config, "TRIANGLE", &TRIANGLE);
+	SetConfigValue (config, "SQUARE", &SQUARE);
+	SetConfigValue (config, "CROSS", &CROSS);
+	SetConfigValue (config, "CIRCLE", &CIRCLE);
+	SetConfigValue (config, "LEFT_LEFT", &LEFT_LEFT);
+	SetConfigValue (config, "LEFT_RIGHT", &LEFT_RIGHT);
+	SetConfigValue (config, "RIGHT_LEFT", &RIGHT_LEFT);
+	SetConfigValue (config, "RIGHT_RIGHT", &RIGHT_RIGHT);
+
+	SetConfigValue (config, "CAMERA_UNLOCK_TOGGLE", &CAMERA_UNLOCK_TOGGLE);
+	SetConfigValue (config, "CAMERA_MOVE_FORWARD", &CAMERA_MOVE_FORWARD);
+	SetConfigValue (config, "CAMERA_MOVE_BACKWARD", &CAMERA_MOVE_BACKWARD);
+	SetConfigValue (config, "CAMERA_MOVE_LEFT", &CAMERA_MOVE_LEFT);
+	SetConfigValue (config, "CAMERA_MOVE_RIGHT", &CAMERA_MOVE_RIGHT);
+	SetConfigValue (config, "CAMERA_MOVE_UP", &CAMERA_MOVE_UP);
+	SetConfigValue (config, "CAMERA_MOVE_DOWN", &CAMERA_MOVE_DOWN);
+	SetConfigValue (config, "CAMERA_ROTATE_CW", &CAMERA_ROTATE_CW);
+	SetConfigValue (config, "CAMERA_ROTATE_CCW", &CAMERA_ROTATE_CCW);
+	SetConfigValue (config, "CAMERA_ZOOM_IN", &CAMERA_ZOOM_IN);
+	SetConfigValue (config, "CAMERA_ZOOM_OUT", &CAMERA_ZOOM_OUT);
+	SetConfigValue (config, "CAMERA_MOVE_FAST", &CAMERA_MOVE_FAST);
+	SetConfigValue (config, "CAMERA_MOVE_SLOW", &CAMERA_MOVE_SLOW);
+
+	toml_free (config);
+
+	config = openConfig (configPath ("config.toml"));
+	if (!config)
+		return;
+
+	rumbleIntensity
+		= 65535 * readConfigInt (config, "rumbleIntensity", 25) / 100;
+
+	toml_free (config);
+
 	SDL_SetMainReady ();
 	if (SDL_Init (SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMECONTROLLER
 				  | SDL_INIT_EVENTS | SDL_INIT_VIDEO)
@@ -537,11 +564,15 @@ InitializeIO (HWND DivaWindowHandle)
 
 			if (!controller)
 				{
-					printf ("Could not open gamecontroller %i: %s\n",
+					printf ("Could not open gamecontroller %s: %s\n",
 							SDL_GameControllerNameForIndex (i),
 							SDL_GetError ());
 					continue;
 				}
+			if (rumbleIntensity != 0
+				&& !SDL_GameControllerHasRumble (controller))
+				printf ("Warning: Controller %s does not support rumble\n",
+						SDL_GameControllerName (controller));
 
 			controllers[i] = controller;
 			break;
@@ -560,8 +591,6 @@ InitializeIO (HWND DivaWindowHandle)
 	targetStates = (struct TargetState *)0x140D0B688;
 	dwGuiDisplay = (struct DwGuiDisplay *)*(uint64_t *)0x141190108;
 	camera = (struct Camera *)0x140FBC2C0;
-
-	ReadConfig ();
 }
 
 void
@@ -572,14 +601,14 @@ UpdateIO (HWND DivaWindowHandle)
 					 || GetForegroundWindow () == DivaWindowHandle;
 
 	currentTouchPanelState->ConnectionState = 1;
-	sliderState->State = SLIDER_OK;
+	sliderState->State = 3;
 
 	if (HasWindowFocus)
 		{
 			memcpy (lastKeyboardState, currentKeyboardState,
 					sizeof (currentKeyboardState));
 
-			for (BYTE i = 0; i < KEYBOARD_KEYS; i++)
+			for (BYTE i = 0; i < 0xFF; i++)
 				currentKeyboardState[i] = GetAsyncKeyState (i) != 0;
 
 			PollSDLInput ();
@@ -637,13 +666,15 @@ UpdateIO (HWND DivaWindowHandle)
 			inputState->MouseDeltaX = 0;
 			inputState->MouseDeltaY = 0;
 
-			for (int i = 0; i < SLIDER_SENSORS; i++)
-				SetSensor (i, SLIDER_NO_PRESSURE);
-			for (int i = 0; i < SLIDER_CONTACT_POINTS; i++)
+			for (int i = 0; i < 32; i++)
+				SetSensor (i, 0);
+			for (int i = 0; i < 2; i++)
 				{
 					sliderState->SectionTouched[i] = false;
 					sliderState->SectionPositions[i] = 0.0f;
 				}
+
+			EndRumble ();
 		}
 }
 
@@ -691,24 +722,14 @@ Update2DIO ()
 	struct FontInfo fontInfo;
 	fontInfo = *GetFontInfoFromID (&fontInfo, 0x11);
 
-	struct DrawParams drawParam;
+	struct DrawParams drawParam = { 0 };
 	drawParam.colour = 0xFFFFFFFF;
 	drawParam.fillColour = 0xFF808080;
-	drawParam.clip = 0;
-	drawParam.clipRectX = 0;
-	drawParam.clipRectY = 0;
-	drawParam.clipRectWidth = 0;
-	drawParam.clipRectHeight = 0;
 	drawParam.layer = 0x19;
-	drawParam.unk20 = 0;
 	drawParam.unk24 = 0xD;
-	drawParam.unk28 = 0;
 	drawParam.textCurrentLocX = (1280 / 2) - 100;
 	drawParam.textCurrentLocY
 		= (720 / 2) - COUNTOFARR (DataTestNames) / 2 * 24;
-	drawParam.lineOriginLocX = 0;
-	drawParam.lineOriginLocY = 0;
-	drawParam.lineLength = 0;
 	drawParam.font = &fontInfo;
 	drawParam.unk50 = 0x25A1;
 
@@ -817,48 +838,6 @@ SetConfigValue (toml_table_t *table, char *key, struct Keybindings *keybind)
 				}
 			free (bind.u.s);
 		}
-}
-
-void
-ReadConfig ()
-{
-	toml_table_t *config = openConfig (configPath ("keyconfig.toml"));
-	if (!config)
-		return;
-
-	SetConfigValue (config, "TEST", &TEST);
-	SetConfigValue (config, "SERVICE", &SERVICE);
-	SetConfigValue (config, "ADVERTISE", &ADVERTISE);
-	SetConfigValue (config, "GAME", &GAME);
-	SetConfigValue (config, "DATA_TEST", &DATA_TEST);
-	SetConfigValue (config, "TEST_MODE", &TEST_MODE);
-	SetConfigValue (config, "APP_ERROR", &APP_ERROR);
-
-	SetConfigValue (config, "START", &START);
-	SetConfigValue (config, "TRIANGLE", &TRIANGLE);
-	SetConfigValue (config, "SQUARE", &SQUARE);
-	SetConfigValue (config, "CROSS", &CROSS);
-	SetConfigValue (config, "CIRCLE", &CIRCLE);
-	SetConfigValue (config, "LEFT_LEFT", &LEFT_LEFT);
-	SetConfigValue (config, "LEFT_RIGHT", &LEFT_RIGHT);
-	SetConfigValue (config, "RIGHT_LEFT", &RIGHT_LEFT);
-	SetConfigValue (config, "RIGHT_RIGHT", &RIGHT_RIGHT);
-
-	SetConfigValue (config, "CAMERA_UNLOCK_TOGGLE", &CAMERA_UNLOCK_TOGGLE);
-	SetConfigValue (config, "CAMERA_MOVE_FORWARD", &CAMERA_MOVE_FORWARD);
-	SetConfigValue (config, "CAMERA_MOVE_BACKWARD", &CAMERA_MOVE_BACKWARD);
-	SetConfigValue (config, "CAMERA_MOVE_LEFT", &CAMERA_MOVE_LEFT);
-	SetConfigValue (config, "CAMERA_MOVE_RIGHT", &CAMERA_MOVE_RIGHT);
-	SetConfigValue (config, "CAMERA_MOVE_UP", &CAMERA_MOVE_UP);
-	SetConfigValue (config, "CAMERA_MOVE_DOWN", &CAMERA_MOVE_DOWN);
-	SetConfigValue (config, "CAMERA_ROTATE_CW", &CAMERA_ROTATE_CW);
-	SetConfigValue (config, "CAMERA_ROTATE_CCW", &CAMERA_ROTATE_CCW);
-	SetConfigValue (config, "CAMERA_ZOOM_IN", &CAMERA_ZOOM_IN);
-	SetConfigValue (config, "CAMERA_ZOOM_OUT", &CAMERA_ZOOM_OUT);
-	SetConfigValue (config, "CAMERA_MOVE_FAST", &CAMERA_MOVE_FAST);
-	SetConfigValue (config, "CAMERA_MOVE_SLOW", &CAMERA_MOVE_SLOW);
-
-	toml_free (config);
 }
 
 void
@@ -974,6 +953,11 @@ PollSDLInput ()
 									SDL_GetError ());
 							continue;
 						}
+					if (rumbleIntensity != 0
+						&& !SDL_GameControllerHasRumble (controller))
+						printf (
+							"Warning: Controller %s does not support rumble\n",
+							SDL_GameControllerName (controller));
 
 					controllers[event.cdevice.which] = controller;
 					break;
@@ -1217,7 +1201,7 @@ UpdateTouch ()
 }
 
 float sliderIncrement = 16.6f / 750.0f;
-float sensorStep = (1.0f / SLIDER_SENSORS);
+float sensorStep = (1.0f / 32);
 
 struct InternalButtonState
 GetInternalButtonState (struct Keybindings bindings)
@@ -1282,7 +1266,7 @@ IsButtonDown (struct Keybindings bindings)
 void
 SetSensor (int index, int value)
 {
-	if (index < 0 || index >= SLIDER_SENSORS)
+	if (index < 0 || index >= 32)
 		return;
 
 	sliderState->SensorPressureLevels[index] = value;
@@ -1302,9 +1286,8 @@ ApplyContactPoint (struct ContactPoint contactPoint, int section)
 
 	if (contactPoint.InContact)
 		{
-			int sensor = (int)(position * (SLIDER_SENSORS - 1));
-			SetSensor (sensor, contactPoint.InContact ? SLIDER_FULL_PRESSURE
-													  : SLIDER_NO_PRESSURE);
+			int sensor = (int)(position * (32 - 1));
+			SetSensor (sensor, contactPoint.InContact ? 180 : 0);
 		}
 
 	sliderState->SectionPositions[section]
@@ -1384,6 +1367,20 @@ FUNCTION_PTR (void, __stdcall, ChangeGameState, 0x1401953D0, uint32_t);
 void
 UpdateInput ()
 {
+	if (IsButtonDown (ADVERTISE))
+		ChangeGameState (1);
+	if (IsButtonDown (GAME))
+		ChangeGameState (2);
+	if (IsButtonDown (DATA_TEST))
+		{
+			ShouldDrawTestMenu = true;
+			ChangeGameState (3);
+		}
+	if (IsButtonDown (TEST_MODE))
+		ChangeGameState (4);
+	if (IsButtonDown (APP_ERROR))
+		ChangeGameState (5);
+
 	if (dwGuiDisplay->active)
 		return;
 
@@ -1402,29 +1399,18 @@ UpdateInput ()
 	EmulateSliderInput (RIGHT_LEFT, RIGHT_RIGHT, &ContactPoints[1],
 						0.5f + sensorStep, 1.0f + sensorStep);
 
-	for (int i = 0; i < SLIDER_SENSORS; i++)
-		SetSensor (i, SLIDER_NO_PRESSURE);
+	for (int i = 0; i < 32; i++)
+		SetSensor (i, 0);
 
-	for (int i = 0; i < SLIDER_CONTACT_POINTS; i++)
+	for (int i = 0; i < 2; i++)
 		ApplyContactPoint (ContactPoints[i], i);
 
-	if (IsButtonDown (ADVERTISE))
-		ChangeGameState (1);
-	if (IsButtonDown (GAME))
-		ChangeGameState (2);
-	if (IsButtonDown (DATA_TEST))
-		{
-			ShouldDrawTestMenu = true;
-			ChangeGameState (3);
-		}
-	if (IsButtonDown (TEST_MODE))
-		ChangeGameState (4);
-	if (IsButtonDown (APP_ERROR))
-		ChangeGameState (5);
-
 	// Update rumble
+	if (rumbleIntensity == 0)
+		return;
+
 	bool isSliderTouched = false;
-	for (int idx = 0; idx < SLIDER_CONTACT_POINTS; idx++)
+	for (int idx = 0; idx < 2; idx++)
 		{
 			if (ContactPoints[idx].InContact)
 				isSliderTouched = true;
@@ -1450,8 +1436,9 @@ UpdateInput ()
 									controllers[i]))
 								continue;
 
-							SDL_GameControllerRumble (controllers[i], 8000,
-													  4000, 1000);
+							SDL_GameControllerRumble (controllers[i],
+													  rumbleIntensity * 2,
+													  rumbleIntensity, 1000);
 						}
 					return;
 				}
