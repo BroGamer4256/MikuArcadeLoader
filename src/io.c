@@ -665,60 +665,60 @@ const char *DataTestNames[] = {
 void
 Update2DIO ()
 {
-	if (ShouldDrawTestMenu)
+	if (!ShouldDrawTestMenu)
+		return;
+
+	struct Keybindings UPARROW = { .keycodes = { VK_UP } };
+	struct Keybindings DOWNARROW = { .keycodes = { VK_DOWN } };
+	struct Keybindings ENTER = { .keycodes = { VK_RETURN } };
+
+	if (IsButtonTapped (UPARROW))
+		selectionIndex--;
+	if (IsButtonTapped (DOWNARROW))
+		selectionIndex++;
+
+	if (selectionIndex > 39)
+		selectionIndex = 20;
+	if (selectionIndex < 20)
+		selectionIndex = 39;
+
+	if (IsButtonTapped (ENTER))
 		{
-			struct Keybindings UPARROW = { .keycodes = { VK_UP } };
-			struct Keybindings DOWNARROW = { .keycodes = { VK_DOWN } };
-			struct Keybindings ENTER = { .keycodes = { VK_RETURN } };
+			ShouldDrawTestMenu = false;
+			ChangeSubState (3, selectionIndex);
+		}
 
-			if (IsButtonTapped (UPARROW))
-				selectionIndex--;
-			if (IsButtonTapped (DOWNARROW))
-				selectionIndex++;
+	struct FontInfo fontInfo;
+	fontInfo = *GetFontInfoFromID (&fontInfo, 0x11);
 
-			if (selectionIndex > 39)
-				selectionIndex = 20;
-			if (selectionIndex < 20)
-				selectionIndex = 39;
+	struct DrawParams drawParam;
+	drawParam.colour = 0xFFFFFFFF;
+	drawParam.fillColour = 0xFF808080;
+	drawParam.clip = 0;
+	drawParam.clipRectX = 0;
+	drawParam.clipRectY = 0;
+	drawParam.clipRectWidth = 0;
+	drawParam.clipRectHeight = 0;
+	drawParam.layer = 0x19;
+	drawParam.unk20 = 0;
+	drawParam.unk24 = 0xD;
+	drawParam.unk28 = 0;
+	drawParam.textCurrentLocX = (1280 / 2) - 100;
+	drawParam.textCurrentLocY
+		= (720 / 2) - COUNTOFARR (DataTestNames) / 2 * 24;
+	drawParam.lineOriginLocX = 0;
+	drawParam.lineOriginLocY = 0;
+	drawParam.lineLength = 0;
+	drawParam.font = &fontInfo;
+	drawParam.unk50 = 0x25A1;
 
-			if (IsButtonTapped (ENTER))
-				{
-					ShouldDrawTestMenu = false;
-					ChangeSubState (3, selectionIndex);
-				}
-
-			struct FontInfo fontInfo;
-			fontInfo = *GetFontInfoFromID (&fontInfo, 0x11);
-
-			struct DrawParams drawParam;
-			drawParam.colour = 0xFFFFFFFF;
-			drawParam.fillColour = 0xFF808080;
-			drawParam.clip = 0;
-			drawParam.clipRectX = 0;
-			drawParam.clipRectY = 0;
-			drawParam.clipRectWidth = 0;
-			drawParam.clipRectHeight = 0;
-			drawParam.layer = 0x19;
-			drawParam.unk20 = 0;
-			drawParam.unk24 = 0xD;
-			drawParam.unk28 = 0;
-			drawParam.textCurrentLocX = (1280 / 2) - 100;
-			drawParam.textCurrentLocY
-				= (720 / 2) - COUNTOFARR (DataTestNames) / 2 * 24;
-			drawParam.lineOriginLocX = 0;
-			drawParam.lineOriginLocY = 0;
-			drawParam.lineLength = 0;
-			drawParam.font = &fontInfo;
-			drawParam.unk50 = 0x25A1;
-
-			for (int i = 0; i < COUNTOFARR (DataTestNames); i++)
-				{
-					char buf[32];
-					sprintf (buf, "%s\n", DataTestNames[i]);
-					drawParam.colour
-						= (i == selectionIndex - 20 ? 0xFF00FFFF : 0xFFFFFFFF);
-					DivaDrawText (&drawParam, 0x1005, buf, 32);
-				}
+	for (int i = 0; i < COUNTOFARR (DataTestNames); i++)
+		{
+			char buf[32];
+			sprintf (buf, "%s\n", DataTestNames[i]);
+			drawParam.colour
+				= (i == selectionIndex - 20 ? 0xFF00FFFF : 0xFFFFFFFF);
+			DivaDrawText (&drawParam, 0x1005, buf, 32);
 		}
 }
 
