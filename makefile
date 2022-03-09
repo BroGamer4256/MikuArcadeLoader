@@ -38,5 +38,5 @@ clean:
 .PHONY: SDL
 SDL:
 	@mkdir -p SDL/${SDL_TARGET}
-	@cd SDL/${SDL_TARGET} && CFLAGS="-Ofast -DSDL_DYNAMIC_API=0 -DSDL_dynapi_h_" ../configure --build=x86_64-linux-gnu --host=${SDL_TARGET} --disable-atomic --disable-cpuinfo --disable-audio --disable-render --disable-sensor --disable-power --disable-filesystem --disable-threads --disable-timers --disable-file --disable-locale --disable-loadso --disable-dbus --disable-ime --disable-ibus --disable-misc --disable-shared --enable-assertions=release --disable-directx --disable-sdl2-config 
+	@cd SDL/${SDL_TARGET} && CFLAGS="-Ofast -DSDL_DYNAMIC_API=0 -DSDL_dynapi_h_" ../configure --build=x86_64-linux-gnu --host=${SDL_TARGET} --disable-atomic --disable-cpuinfo --disable-audio --disable-render --disable-sensor --disable-power --disable-filesystem --disable-threads --disable-timers --disable-file --disable-locale --disable-loadso --disable-dbus --disable-ime --disable-ibus --disable-misc --disable-shared --enable-assertions=release --enable-directx --disable-sdl2-config --enable-haptic 
 	@make -s -C SDL/${SDL_TARGET}

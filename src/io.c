@@ -696,7 +696,7 @@ const char *DataTestNames[] = {
 void
 Update2DIO ()
 {
-	if (!ShouldDrawTestMenu)
+	if (!ShouldDrawTestMenu || *(uint32_t *)0x140EDA810 != 3)
 		return;
 
 	struct Keybindings UPARROW = { .keycodes = { VK_UP } };
@@ -800,6 +800,8 @@ SetConfigValue (toml_table_t *table, char *key, struct Keybindings *keybind)
 			if (!bind.ok)
 				break;
 			struct ConfigValue value = StringToConfigEnum (bind.u.s);
+			free (bind.u.s);
+
 			switch (value.type)
 				{
 				case keycode:
@@ -836,7 +838,6 @@ SetConfigValue (toml_table_t *table, char *key, struct Keybindings *keybind)
 				default:
 					break;
 				}
-			free (bind.u.s);
 		}
 }
 
@@ -1410,9 +1411,9 @@ UpdateInput ()
 		return;
 
 	bool isSliderTouched = false;
-	for (int idx = 0; idx < 2; idx++)
+	for (int i = 0; i < 2; i++)
 		{
-			if (ContactPoints[idx].InContact)
+			if (ContactPoints[i].InContact)
 				isSliderTouched = true;
 		}
 	if (!isSliderTouched)
