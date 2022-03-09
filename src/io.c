@@ -2,10 +2,13 @@
 #include "io.h"
 #include "helpers.h"
 #include <SDL.h>
+#include <math.h>
 #include <stdio.h>
 
 bool IsMouseScrollUp = false;
 bool IsMouseScrollDown = false;
+
+bool unlockedCamera = false;
 
 void ReadConfig ();
 
@@ -25,6 +28,7 @@ void UpdateTouch ();
 void UpdateInputUnfocused ();
 void UpdateInput ();
 void UpdateDwGuiInput ();
+void UpdateUnlockedCamera (HWND DivaWindowHandle);
 
 void SetSensor (int index, int value);
 
@@ -195,6 +199,10 @@ struct
 	{ "DOWNARROW", VK_DOWN },
 	{ "RIGHTARROW", VK_RIGHT },
 	{ "ENTER", VK_RETURN },
+	{ "SPACE", VK_SPACE },
+	{ "CONTROL", VK_CONTROL },
+	{ "SHIFT", VK_SHIFT },
+	{ "TAB", VK_TAB },
 };
 
 struct
@@ -339,6 +347,19 @@ struct KeyBit
 	uint8_t keycode;
 };
 
+struct Camera
+{
+	float PositionX;
+	float PositionY;
+	float PositionZ;
+	float FocusX;
+	float FocusY;
+	float FocusZ;
+	float Rotation;
+	float HorizontalFov;
+	float VerticalFov;
+} * camera;
+
 bool HasWindowFocus = false;
 bool currentKeyboardState[KEYBOARD_KEYS];
 bool lastKeyboardState[KEYBOARD_KEYS];
@@ -370,6 +391,35 @@ struct Keybindings RIGHT_LEFT
 	= { .keycodes = { 'U' }, .axis = { SDL_AXIS_RIGHT_LEFT } };
 struct Keybindings RIGHT_RIGHT
 	= { .keycodes = { 'O' }, .axis = { SDL_AXIS_RIGHT_RIGHT } };
+
+struct Keybindings CAMERA_UNLOCK_TOGGLE
+	= { .keycodes = { VK_F3 }, .buttons = { SDL_CONTROLLER_BUTTON_BACK } };
+struct Keybindings CAMERA_MOVE_FORWARD
+	= { .keycodes = { 'W' }, .axis = { SDL_AXIS_LEFT_UP } };
+struct Keybindings CAMERA_MOVE_BACKWARD
+	= { .keycodes = { 'S' }, .axis = { SDL_AXIS_LEFT_DOWN } };
+struct Keybindings CAMERA_MOVE_LEFT
+	= { .keycodes = { 'A' }, .axis = { SDL_AXIS_LEFT_LEFT } };
+struct Keybindings CAMERA_MOVE_RIGHT
+	= { .keycodes = { 'D' }, .axis = { SDL_AXIS_LEFT_RIGHT } };
+struct Keybindings CAMERA_MOVE_UP
+	= { .keycodes = { VK_SPACE }, .buttons = { SDL_CONTROLLER_BUTTON_A } };
+struct Keybindings CAMERA_MOVE_DOWN
+	= { .keycodes = { VK_CONTROL }, .buttons = { SDL_CONTROLLER_BUTTON_B } };
+struct Keybindings CAMERA_ROTATE_CW
+	= { .keycodes = { 'E' },
+		.buttons = { SDL_CONTROLLER_BUTTON_RIGHTSHOULDER } };
+struct Keybindings CAMERA_ROTATE_CCW
+	= { .keycodes = { 'Q' },
+		.buttons = { SDL_CONTROLLER_BUTTON_LEFTSHOULDER } };
+struct Keybindings CAMERA_ZOOM_IN
+	= { .keycodes = { 'R' }, .axis = { SDL_AXIS_LTRIGGER_DOWN } };
+struct Keybindings CAMERA_ZOOM_OUT
+	= { .keycodes = { 'F' }, .axis = { SDL_AXIS_RTRIGGER_DOWN } };
+struct Keybindings CAMERA_MOVE_FAST
+	= { .keycodes = { VK_SHIFT }, .buttons = { SDL_CONTROLLER_BUTTON_X } };
+struct Keybindings CAMERA_MOVE_SLOW
+	= { .keycodes = { VK_TAB }, .buttons = { SDL_CONTROLLER_BUTTON_Y } };
 
 struct KeyBit keyBits[20] = {
 	{ 5, VK_LEFT },		{ 6, VK_RIGHT },
@@ -439,6 +489,7 @@ InitializeIO (HWND DivaWindowHandle)
 	currentTouchPanelState = (struct TouchPanelState *)0x14CC9EC30;
 	targetStates = (struct TargetState *)0x140D0B688;
 	dwGuiDisplay = (struct DwGuiDisplay *)*(uint64_t *)0x141190108;
+	camera = (struct Camera *)0x140FBC2C0;
 
 	ReadConfig ();
 }
@@ -463,12 +514,17 @@ UpdateIO (HWND DivaWindowHandle)
 
 			PollSDLInput ();
 			PollMouseInput (DivaWindowHandle);
-			UpdateInput ();
-			UpdateTouch ();
-			UpdateDwGuiInput ();
 
 			if (KeyboardIsDown (VK_ESCAPE))
 				*(bool *)0x140EDA6B0 = true;
+
+			UpdateUnlockedCamera (DivaWindowHandle);
+			if (unlockedCamera)
+				return;
+
+			UpdateInput ();
+			UpdateTouch ();
+			UpdateDwGuiInput ();
 
 			if (dwGuiDisplay->on)
 				return;
@@ -638,6 +694,20 @@ ReadConfig ()
 	SetConfigValue (config, "RIGHT_LEFT", &RIGHT_LEFT);
 	SetConfigValue (config, "RIGHT_RIGHT", &RIGHT_RIGHT);
 
+	SetConfigValue (config, "CAMERA_UNLOCK_TOGGLE", &CAMERA_UNLOCK_TOGGLE);
+	SetConfigValue (config, "CAMERA_MOVE_FORWARD", &CAMERA_MOVE_FORWARD);
+	SetConfigValue (config, "CAMERA_MOVE_BACKWARD", &CAMERA_MOVE_BACKWARD);
+	SetConfigValue (config, "CAMERA_MOVE_LEFT", &CAMERA_MOVE_LEFT);
+	SetConfigValue (config, "CAMERA_MOVE_RIGHT", &CAMERA_MOVE_RIGHT);
+	SetConfigValue (config, "CAMERA_MOVE_UP", &CAMERA_MOVE_UP);
+	SetConfigValue (config, "CAMERA_MOVE_DOWN", &CAMERA_MOVE_DOWN);
+	SetConfigValue (config, "CAMERA_ROTATE_CW", &CAMERA_ROTATE_CW);
+	SetConfigValue (config, "CAMERA_ROTATE_CCW", &CAMERA_ROTATE_CCW);
+	SetConfigValue (config, "CAMERA_ZOOM_IN", &CAMERA_ZOOM_IN);
+	SetConfigValue (config, "CAMERA_ZOOM_OUT", &CAMERA_ZOOM_OUT);
+	SetConfigValue (config, "CAMERA_MOVE_FAST", &CAMERA_MOVE_FAST);
+	SetConfigValue (config, "CAMERA_MOVE_SLOW", &CAMERA_MOVE_SLOW);
+
 	toml_free (config);
 }
 
@@ -732,8 +802,8 @@ PollSDLInput ()
 	memcpy (lastControllerButtonsState, currentControllerButtonsState,
 			SDL_CONTROLLER_BUTTON_MAX);
 	lastControllerAxisState = currentControllerAxisState;
-	memset (&currentControllerAxisState, 0,
-			sizeof (currentControllerAxisState));
+	// memset (&currentControllerAxisState, 0,
+	//		sizeof (currentControllerAxisState));
 
 	SDL_Event event;
 	while (SDL_PollEvent (&event) != 0)
@@ -818,6 +888,36 @@ PollSDLInput ()
 									break;
 								case SDL_CONTROLLER_AXIS_RIGHTY:
 									currentControllerAxisState.RightUp = 1;
+									break;
+								}
+						}
+					else
+						{
+							switch (event.caxis.axis)
+								{
+								case SDL_CONTROLLER_AXIS_LEFTX:
+									currentControllerAxisState.LeftRight = 0;
+									currentControllerAxisState.LeftLeft = 0;
+									break;
+								case SDL_CONTROLLER_AXIS_LEFTY:
+									currentControllerAxisState.LeftDown = 0;
+									currentControllerAxisState.LeftUp = 0;
+									break;
+								case SDL_CONTROLLER_AXIS_RIGHTX:
+									currentControllerAxisState.RightRight = 0;
+									currentControllerAxisState.RightLeft = 0;
+									break;
+								case SDL_CONTROLLER_AXIS_RIGHTY:
+									currentControllerAxisState.RightDown = 0;
+									currentControllerAxisState.RightUp = 0;
+									break;
+								case SDL_CONTROLLER_AXIS_TRIGGERLEFT:
+									currentControllerAxisState.LTriggerDown
+										= 0;
+									break;
+								case SDL_CONTROLLER_AXIS_TRIGGERRIGHT:
+									currentControllerAxisState.RTriggerDown
+										= 0;
 									break;
 								}
 						}
@@ -1268,4 +1368,148 @@ UpdateDwGuiInput ()
 			IsMouseScrollUp = false;
 			IsMouseScrollDown = false;
 		}
+}
+
+float verticalRotation;
+float horizontalRotation;
+FUNCTION_PTR (void, __stdcall, GlutSetCursor, 0x1408B68E6, int32_t);
+void
+UpdateUnlockedCamera (HWND DivaWindowHandle)
+{
+	if (IsButtonTapped (CAMERA_UNLOCK_TOGGLE))
+		{
+			unlockedCamera = !unlockedCamera;
+			GlutSetCursor (unlockedCamera ? 0x65 : 0);
+			if (unlockedCamera)
+				{
+					WRITE_MEMORY (0x1401F9460, uint8_t, 0xC3);
+					WRITE_MEMORY (0x1401F93F0, uint8_t, 0xC3);
+					WRITE_MEMORY (0x1401F9480, uint8_t, 0xC3);
+					WRITE_MEMORY (0x1401F9430, uint8_t, 0xC3);
+
+					verticalRotation
+						= (float)(atan2 (camera->FocusZ - camera->PositionZ,
+										 camera->FocusX - camera->PositionX)
+								  * 180.0 / M_PI)
+						  + 90.0f;
+					horizontalRotation = 0.0f;
+					camera->Rotation = 0.0f;
+					camera->HorizontalFov = 70.0f;
+
+					RECT window;
+					GetClientRect (DivaWindowHandle, &window);
+					SetCursorPos (window.right / 2, window.bottom / 2);
+				}
+			else
+				{
+					WRITE_MEMORY (0x1401F9460, uint8_t, 0x8B);
+					WRITE_MEMORY (0x1401F93F0, uint8_t, 0x8B);
+					WRITE_MEMORY (0x1401F9480, uint8_t, 0xF3);
+					WRITE_MEMORY (0x1401F9430, uint8_t, 0x80);
+				}
+		}
+
+	if (!unlockedCamera)
+		return;
+
+	float speed = IsButtonDown (CAMERA_MOVE_FAST)	? 0.1f
+				  : IsButtonDown (CAMERA_MOVE_SLOW) ? 0.005f
+													: 0.025f;
+
+	bool forward = IsButtonDown (CAMERA_MOVE_FORWARD);
+	bool left = IsButtonDown (CAMERA_MOVE_LEFT);
+	bool up = IsButtonDown (CAMERA_MOVE_UP);
+	bool cw = IsButtonDown (CAMERA_ROTATE_CW);
+	bool zoomIn = IsButtonDown (CAMERA_ZOOM_IN);
+
+	if (forward ^ IsButtonDown (CAMERA_MOVE_BACKWARD))
+		{
+			camera->PositionX += -1
+								 * cos (((horizontalRotation
+										  - (forward ? 0.0f : 180.0f) + 90.0f)
+										 * M_PI)
+										/ 180.0f)
+								 * speed;
+			camera->PositionZ += -1
+								 * sin (((horizontalRotation
+										  - (forward ? 0.0f : 180.0f) + 90.0f)
+										 * M_PI)
+										/ 180.0f)
+								 * speed;
+		}
+	if (left ^ IsButtonDown (CAMERA_MOVE_RIGHT))
+		{
+			camera->PositionX += -1
+								 * cos (((horizontalRotation
+										  + (left ? -90.0f : 90.0f) + 90.0f)
+										 * M_PI)
+										/ 180.0f)
+								 * speed;
+			camera->PositionZ += -1
+								 * sin (((horizontalRotation
+										  + (left ? -90.0f : 90.0f) + 90.0f)
+										 * M_PI)
+										/ 180.0f)
+								 * speed;
+		}
+	if (up ^ IsButtonDown (CAMERA_MOVE_DOWN))
+		camera->PositionY += speed * (up ? 0.5f : -0.5f);
+	if (cw ^ IsButtonDown (CAMERA_ROTATE_CCW))
+		camera->Rotation += speed * (cw ? -10.0f : 10.0f);
+	if (zoomIn ^ IsButtonDown (CAMERA_ZOOM_OUT))
+		{
+			camera->HorizontalFov += speed * (zoomIn ? -5.0f : 5.0f);
+			if (camera->HorizontalFov < 1.0f)
+				camera->HorizontalFov = 1.0f;
+			if (camera->HorizontalFov > 170.0f)
+				camera->HorizontalFov = 170.0f;
+		}
+
+	int mouseDeltaX = currentMouseState.Position.x - lastMouseState.Position.x;
+	int mouseDeltaY = currentMouseState.Position.y - lastMouseState.Position.y;
+
+	if (mouseDeltaX != 0 || mouseDeltaY != 0)
+		{
+			RECT window;
+			GetClientRect (DivaWindowHandle, &window);
+			SetCursorPos (window.right / 2, window.bottom / 2);
+			currentMouseState.Position.x = window.right / 2;
+			currentMouseState.Position.y = window.bottom / 2;
+
+			horizontalRotation += mouseDeltaX * 0.25f;
+			verticalRotation -= mouseDeltaY * 0.05f;
+		}
+
+	struct Keybindings RSTICK_UP = { .axis = { SDL_AXIS_RIGHT_UP } };
+	struct Keybindings RSTICK_DOWN = { .axis = { SDL_AXIS_RIGHT_DOWN } };
+	struct Keybindings RSTICK_LEFT = { .axis = { SDL_AXIS_RIGHT_LEFT } };
+	struct Keybindings RSTICK_RIGHT = { .axis = { SDL_AXIS_RIGHT_RIGHT } };
+	bool rstickUp = IsButtonDown (RSTICK_UP);
+	bool rstickDown = IsButtonDown (RSTICK_DOWN);
+	bool rstickLeft = IsButtonDown (RSTICK_LEFT);
+	bool rstickRight = IsButtonDown (RSTICK_RIGHT);
+
+	if (rstickUp)
+		verticalRotation += 0.25f;
+	if (rstickDown)
+		verticalRotation -= 0.25f;
+	if (rstickLeft)
+		horizontalRotation -= 1.25f;
+	if (rstickRight)
+		horizontalRotation += 1.25f;
+
+	if (verticalRotation < -75.0f)
+		verticalRotation = -75.0f;
+	if (verticalRotation > 75.0f)
+		verticalRotation = 75.0f;
+
+	camera->FocusX
+		= camera->PositionX
+		  + (-1 * cos (((horizontalRotation + 90.0f) * M_PI) / 180.0f));
+	camera->FocusY
+		= camera->PositionY
+		  + (-1 * cos (((verticalRotation + 90.0f) * M_PI) / 180.0f) * 5.0f);
+	camera->FocusZ
+		= camera->PositionZ
+		  + (-1 * sin (((horizontalRotation + 90.0f) * M_PI) / 180.0f));
 }
