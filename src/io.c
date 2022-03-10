@@ -11,6 +11,7 @@ bool unlockedCamera = false;
 bool HasWindowFocus = false;
 bool currentKeyboardState[0xFF];
 bool lastKeyboardState[0xFF];
+bool isPaused = false;
 int rumbleIntensity = 8000;
 
 struct ContactPoint
@@ -391,6 +392,17 @@ struct DrawParams
 	uint16_t unk50;
 };
 
+struct Rectangle
+{
+	float x;
+	float y;
+	float width;
+	float height;
+};
+
+void DrawPauseMenu ();
+void DrawTestMenu ();
+
 bool IsButtonTapped (struct Keybindings bindings);
 void PollMouseInput ();
 bool KeyboardIsDown (BYTE keycode);
@@ -485,6 +497,17 @@ struct KeyBit keyBits[20] = {
 
 	{ 96, MK_LBUTTON }, { 97, VK_MBUTTON }, { 98, MK_RBUTTON },
 };
+
+bool giveUp = false;
+HOOK (bool, __stdcall, GiveUp, 0x14010EF00, void *cls)
+{
+	if (giveUp)
+		{
+			giveUp = false;
+			return true;
+		}
+	return originalGiveUp (cls);
+}
 
 SDL_Window *window;
 SDL_GameController *controllers[255];
@@ -591,6 +614,8 @@ InitializeIO (HWND DivaWindowHandle)
 	targetStates = (struct TargetState *)0x140D0B688;
 	dwGuiDisplay = (struct DwGuiDisplay *)*(uint64_t *)0x141190108;
 	camera = (struct Camera *)0x140FBC2C0;
+
+	INSTALL_HOOK (GiveUp);
 }
 
 void
@@ -618,7 +643,7 @@ UpdateIO (HWND DivaWindowHandle)
 				*(bool *)0x140EDA6B0 = true;
 
 			UpdateUnlockedCamera (DivaWindowHandle);
-			if (unlockedCamera)
+			if (unlockedCamera || isPaused)
 				return;
 
 			UpdateInput ();
@@ -678,14 +703,159 @@ UpdateIO (HWND DivaWindowHandle)
 		}
 }
 
-bool ShouldDrawTestMenu = false;
-int selectionIndex = 20;
-FUNCTION_PTR (void, __stdcall, ChangeSubState, 0x140195260, uint32_t,
-			  uint32_t);
 FUNCTION_PTR (void, __stdcall, DivaDrawText, 0x140198500, struct DrawParams *,
 			  uint32_t, const char *, int64_t);
 FUNCTION_PTR (struct FontInfo *, __thiscall, GetFontInfoFromID, 0x140196510,
 			  struct FontInfo *, uint32_t);
+FUNCTION_PTR (void, __stdcall, FillRectangle, 0x140198D80, struct DrawParams *,
+			  const struct Rectangle *);
+void
+DrawMenu (int index, const char **items, int items_len)
+{
+	struct FontInfo fontInfo;
+	fontInfo = *GetFontInfoFromID (&fontInfo, 0x11);
+
+	struct DrawParams drawParam = { 0 };
+	drawParam.colour = 0xC0000000;
+	drawParam.fillColour = 0xC0000000;
+	drawParam.layer = 0x18;
+	drawParam.unk24 = 0xD;
+	drawParam.textCurrentLocX = (1280 / 2) - 100;
+	drawParam.textCurrentLocY = (720 / 2) - (items_len / 2 * 24);
+	drawParam.font = &fontInfo;
+	drawParam.unk50 = 0x25A1;
+
+	struct Rectangle rect;
+	rect.x = 0;
+	rect.y = 0;
+	rect.width = 1280;
+	rect.height = 720;
+	FillRectangle (&drawParam, &rect);
+	drawParam.layer = 0x19;
+	for (int i = 0; i < items_len; i++)
+		{
+			char buf[32];
+			sprintf (buf, "%s\n", items[i]);
+			drawParam.colour = (i == index ? 0xFF00FFFF : 0xFFFFFFFF);
+			DivaDrawText (&drawParam, 0x1005, buf, 32);
+		}
+}
+
+void
+Update2DIO ()
+{
+	DrawTestMenu ();
+	DrawPauseMenu ();
+}
+
+const char *PauseMenuItems[] = { "RESUME", "RESTART", "GIVE UP" };
+bool firstPauseFrame = true;
+int pauseIndex = 0;
+FUNCTION_PTR (void, __stdcall, PauseDSC, 0x1401295C0);
+FUNCTION_PTR (void, __stdcall, UnPauseDSC, 0x140129590);
+FUNCTION_PTR (void, __stdcall, LoadPV, 0x1400FDDC0, uint64_t);
+uint8_t aetMoveOriginal[8];
+uint8_t framespeedOriginal[4];
+uint8_t ageageHairOriginal[3];
+bool playstates[8]; /* Should be enough */
+void
+DrawPauseMenu ()
+{
+	if (*(uint32_t *)0x140EDA82C != 13)
+		isPaused = false;
+	if (!isPaused)
+		return;
+
+	struct Keybindings UP = { .keycodes = { VK_UP },
+							  .buttons = { SDL_CONTROLLER_BUTTON_DPAD_UP },
+							  .axis = { SDL_AXIS_LEFT_UP } };
+	struct Keybindings DOWN = { .keycodes = { VK_DOWN },
+								.buttons = { SDL_CONTROLLER_BUTTON_DPAD_DOWN },
+								.axis = { SDL_AXIS_LEFT_DOWN } };
+
+	if (IsButtonTapped (UP))
+		pauseIndex--;
+	if (IsButtonTapped (DOWN))
+		pauseIndex++;
+
+	if (pauseIndex > 2)
+		pauseIndex = 0;
+	if (pauseIndex < 0)
+		pauseIndex = 2;
+
+	if (firstPauseFrame)
+		{
+			firstPauseFrame = false;
+			PauseDSC ();
+			memcpy (&aetMoveOriginal, (void *)0x1401703B3, 8);
+			memcpy (&framespeedOriginal, (void *)0x140192D50, 4);
+			memcpy (&ageageHairOriginal, (void *)0x14054352C, 3);
+			WRITE_NOP (0x1401703B3, 8);
+			WRITE_MEMORY (0x140192D50, uint8_t, 0x0F, 0x57, 0xC0, 0xC3);
+			WRITE_MEMORY (0x14054352C, uint8_t, 0x0F, 0x57, 0xDB);
+
+			uint64_t audioMixer = *(uint64_t *)0x14CC61190;
+			uint64_t audioStreams = *(uint64_t *)(audioMixer + 0x18);
+			int32_t audioStreamsLen = *(uint64_t *)(audioMixer + 0x20);
+
+			for (int i = 0; i < audioStreamsLen; i++)
+				{
+					uint32_t *state
+						= (uint32_t *)(audioStreams + i * 0x50 + 0x18);
+					playstates[i] = *state;
+					*state = 0;
+				}
+		}
+	else if (IsButtonTapped (START) || IsButtonTapped (CIRCLE))
+		{
+			firstPauseFrame = true;
+			isPaused = false;
+			if (pauseIndex == 2)
+				giveUp = true;
+
+			UnPauseDSC ();
+			for (int i = 0; i < 8; i++)
+				WRITE_MEMORY (0x1401703B3 + i, uint8_t, aetMoveOriginal[i]);
+			for (int i = 0; i < 4; i++)
+				WRITE_MEMORY (0x140192D50 + i, uint8_t, framespeedOriginal[i]);
+			for (int i = 0; i < 3; i++)
+				WRITE_MEMORY (0x14054352C + i, uint8_t, ageageHairOriginal[i]);
+
+			uint64_t audioMixer = *(uint64_t *)0x14CC61190;
+			uint64_t audioStreams = *(uint64_t *)(audioMixer + 0x18);
+			int32_t audioStreamsLen = *(uint64_t *)(audioMixer + 0x20);
+
+			for (int i = 0; i < audioStreamsLen; i++)
+				{
+					uint32_t *state
+						= (uint32_t *)(audioStreams + i * 0x50 + 0x18);
+					*state = playstates[i];
+				}
+
+			if (pauseIndex != 1)
+				return;
+
+			WRITE_MEMORY (0x1401038CD, uint8_t, 0x15);
+			WRITE_MEMORY (0x140103B94, uint8_t, 0x18);
+			*(uint8_t *)0x140D0B512 = 0;
+			*(uint8_t *)0x140D0B524 = 8;
+			*(int32_t *)0x140CDD8D8 = 0x11;
+			while (*(int32_t *)0x140CDD8D8 < 0x18)
+				LoadPV (0x140CDD8D0);
+			*(int32_t *)0x140D0A9BC = 0;
+			*(int32_t *)0x140D0A9B8 = 0;
+			*(int32_t *)0x140D0A9C0 = 0;
+			*(uint8_t *)0x140D0A50C = 0;
+			*(int32_t *)0x140D0AA0F = 0;
+			WRITE_MEMORY (0x1401038CD, uint8_t, 0x12);
+			WRITE_MEMORY (0x140103B94, uint8_t, 0x16);
+
+			return;
+		}
+
+	DrawMenu (pauseIndex, PauseMenuItems, 3);
+}
+
 const char *DataTestNames[] = {
 	"MAIN TEST",	 "MISC TEST",	   "OBJECT TEST",	"STAGE TEST",
 	"MOTION TEST",	 "COLLISION TEST", "SPRITE TEST",	"2DAUTH TEST",
@@ -693,54 +863,42 @@ const char *DataTestNames[] = {
 	"PVSCRIPT TEST", "PRINT TEST",	   "CARD TEST",		"OPD TEST",
 	"SLIDER TEST",	 "GLITTER TEST",   "GRAPHICS TEST", "COLLECTION CARD TEST",
 };
+bool ShouldDrawTestMenu = false;
+int dataTestIndex = 20;
+FUNCTION_PTR (void, __stdcall, ChangeSubState, 0x140195260, uint32_t,
+			  uint32_t);
 void
-Update2DIO ()
+DrawTestMenu ()
 {
-	if (!ShouldDrawTestMenu || *(uint32_t *)0x140EDA810 != 3)
+	if (*(uint32_t *)0x140EDA810 != 3)
+		ShouldDrawTestMenu = false;
+	if (!ShouldDrawTestMenu)
 		return;
 
-	struct Keybindings UPARROW = { .keycodes = { VK_UP } };
-	struct Keybindings DOWNARROW = { .keycodes = { VK_DOWN } };
-	struct Keybindings ENTER = { .keycodes = { VK_RETURN } };
+	struct Keybindings UP = { .keycodes = { VK_UP },
+							  .buttons = { SDL_CONTROLLER_BUTTON_DPAD_UP },
+							  .axis = { SDL_AXIS_LEFT_UP } };
+	struct Keybindings DOWN = { .keycodes = { VK_DOWN },
+								.buttons = { SDL_CONTROLLER_BUTTON_DPAD_DOWN },
+								.axis = { SDL_AXIS_LEFT_DOWN } };
 
-	if (IsButtonTapped (UPARROW))
-		selectionIndex--;
-	if (IsButtonTapped (DOWNARROW))
-		selectionIndex++;
+	if (IsButtonTapped (UP))
+		dataTestIndex--;
+	if (IsButtonTapped (DOWN))
+		dataTestIndex++;
 
-	if (selectionIndex > 39)
-		selectionIndex = 20;
-	if (selectionIndex < 20)
-		selectionIndex = 39;
+	if (dataTestIndex > 39)
+		dataTestIndex = 20;
+	if (dataTestIndex < 20)
+		dataTestIndex = 39;
 
-	if (IsButtonTapped (ENTER))
+	if (IsButtonTapped (START))
 		{
 			ShouldDrawTestMenu = false;
-			ChangeSubState (3, selectionIndex);
+			ChangeSubState (3, dataTestIndex - 1);
 		}
 
-	struct FontInfo fontInfo;
-	fontInfo = *GetFontInfoFromID (&fontInfo, 0x11);
-
-	struct DrawParams drawParam = { 0 };
-	drawParam.colour = 0xFFFFFFFF;
-	drawParam.fillColour = 0xFF808080;
-	drawParam.layer = 0x19;
-	drawParam.unk24 = 0xD;
-	drawParam.textCurrentLocX = (1280 / 2) - 100;
-	drawParam.textCurrentLocY
-		= (720 / 2) - COUNTOFARR (DataTestNames) / 2 * 24;
-	drawParam.font = &fontInfo;
-	drawParam.unk50 = 0x25A1;
-
-	for (int i = 0; i < COUNTOFARR (DataTestNames); i++)
-		{
-			char buf[32];
-			sprintf (buf, "%s\n", DataTestNames[i]);
-			drawParam.colour
-				= (i == selectionIndex - 20 ? 0xFF00FFFF : 0xFFFFFFFF);
-			DivaDrawText (&drawParam, 0x1005, buf, 32);
-		}
+	DrawMenu (dataTestIndex - 20, DataTestNames, 20);
 }
 
 void
@@ -1381,6 +1539,9 @@ UpdateInput ()
 		ChangeGameState (4);
 	if (IsButtonDown (APP_ERROR))
 		ChangeGameState (5);
+
+	if (*(uint32_t *)0x140EDA82C == 13)
+		isPaused = IsButtonTapped (START);
 
 	if (dwGuiDisplay->active)
 		return;
