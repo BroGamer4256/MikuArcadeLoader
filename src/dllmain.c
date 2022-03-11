@@ -329,8 +329,10 @@ DllMain (HMODULE mod, DWORD cause, void *ctx)
 	INSTALL_HOOK (Update);
 
 	toml_table_t *config = openConfig (configPath ("config.toml"));
+	if (!config)
+		return 1;
 	fps = readConfigInt (config, "fps", 0);
-	if (fps != 0)
+	if (fps > 0)
 		{
 			expectedFrameDuration = 1000 / fps;
 			INSTALL_HOOK (Update2D);
@@ -378,6 +380,8 @@ DllMain (HMODULE mod, DWORD cause, void *ctx)
 			strcpy (filepath, configPath ("patches\\"));
 			strcat (filepath, fd.cFileName);
 			toml_table_t *patchesConfig = openConfig (filepath);
+			if (!patchesConfig)
+				return 1;
 
 			if (!readConfigBool (patchesConfig, "enabled", false))
 				{

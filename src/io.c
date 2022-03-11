@@ -703,12 +703,13 @@ UpdateIO (HWND DivaWindowHandle)
 		}
 }
 
-FUNCTION_PTR (void, __stdcall, DivaDrawText, 0x140198500, struct DrawParams *,
-			  uint32_t, const char *, int64_t);
+FUNCTION_PTR (void, __stdcall, DivaDrawText, 0x140198500,
+			  struct DrawParams *drawParam, uint32_t flags, const char *text,
+			  int64_t len);
 FUNCTION_PTR (struct FontInfo *, __thiscall, GetFontInfoFromID, 0x140196510,
-			  struct FontInfo *, uint32_t);
-FUNCTION_PTR (void, __stdcall, FillRectangle, 0x140198D80, struct DrawParams *,
-			  const struct Rectangle *);
+			  struct FontInfo *fontInfo, uint32_t id);
+FUNCTION_PTR (void, __stdcall, FillRectangle, 0x140198D80,
+			  struct DrawParams *drawParam, const struct Rectangle *rect);
 void
 DrawMenu (int index, const char **items, int items_len)
 {
@@ -725,9 +726,7 @@ DrawMenu (int index, const char **items, int items_len)
 	drawParam.font = &fontInfo;
 	drawParam.unk50 = 0x25A1;
 
-	struct Rectangle rect;
-	rect.x = 0;
-	rect.y = 0;
+	struct Rectangle rect = { 0 };
 	rect.width = 1280;
 	rect.height = 720;
 	FillRectangle (&drawParam, &rect);
@@ -753,7 +752,7 @@ bool firstPauseFrame = true;
 int pauseIndex = 0;
 FUNCTION_PTR (void, __stdcall, PauseDSC, 0x1401295C0);
 FUNCTION_PTR (void, __stdcall, UnPauseDSC, 0x140129590);
-FUNCTION_PTR (void, __stdcall, LoadPV, 0x1400FDDC0, uint64_t);
+FUNCTION_PTR (void, __stdcall, LoadPV, 0x1400FDDC0, uint64_t cls);
 uint8_t aetMoveOriginal[8];
 uint8_t framespeedOriginal[4];
 uint8_t ageageHairOriginal[3];
@@ -865,8 +864,8 @@ const char *DataTestNames[] = {
 };
 bool ShouldDrawTestMenu = false;
 int dataTestIndex = 20;
-FUNCTION_PTR (void, __stdcall, ChangeSubState, 0x140195260, uint32_t,
-			  uint32_t);
+FUNCTION_PTR (void, __stdcall, ChangeSubState, 0x140195260, uint32_t gameState,
+			  uint32_t subState);
 void
 DrawTestMenu ()
 {
@@ -1522,7 +1521,8 @@ EndRumble ()
 		}
 }
 
-FUNCTION_PTR (void, __stdcall, ChangeGameState, 0x1401953D0, uint32_t);
+FUNCTION_PTR (void, __stdcall, ChangeGameState, 0x1401953D0,
+			  uint32_t gameState);
 void
 UpdateInput ()
 {
@@ -1684,7 +1684,7 @@ UpdateDwGuiInput ()
 
 float verticalRotation;
 float horizontalRotation;
-FUNCTION_PTR (void, __stdcall, GlutSetCursor, 0x1408B68E6, int32_t);
+FUNCTION_PTR (void, __stdcall, GlutSetCursor, 0x1408B68E6, int32_t cursorID);
 void
 UpdateUnlockedCamera (HWND DivaWindowHandle)
 {
