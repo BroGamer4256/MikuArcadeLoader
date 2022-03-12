@@ -16,8 +16,7 @@ float fspeed_error_next = 0.0;
 float fspeed_last_result = 0;
 
 void
-Initialize ()
-{
+Initialize () {
 	FirstUpdate = false;
 	DivaWindowHandle
 		= FindWindow (0, "Hatsune Miku Project DIVA Arcade Future Tone");
@@ -71,8 +70,7 @@ Initialize ()
 				  0xF3, 0x41, 0x0F, 0x59, 0x19, 0xEB, 0xB0);
 }
 
-HOOK (void, __cdecl, Update, 0x14018CC40)
-{
+HOOK (void, __cdecl, Update, 0x14018CC40) {
 	if (FirstUpdate)
 		Initialize ();
 
@@ -97,8 +95,7 @@ HOOK (void, __cdecl, Update, 0x14018CC40)
 
 float expectedFrameDuration = 1000 / 60;
 uint64_t nextUpdate;
-HOOK (int64_t, __fastcall, EngineUpdate, 0x140194CD0, int64_t a1)
-{
+HOOK (int64_t, __fastcall, EngineUpdate, 0x140194CD0, int64_t a1) {
 	uint64_t curTime = GetTickCount64 ();
 
 	if (curTime < nextUpdate)
@@ -112,30 +109,26 @@ HOOK (int64_t, __fastcall, EngineUpdate, 0x140194CD0, int64_t a1)
 	return originalEngineUpdate (a1);
 }
 
-HOOK (void, __cdecl, Update2D, 0x0140501F70, void *a1)
-{
-	if (fps > 0)
-		{
-			fspeed_error = fspeed_error_next;
-			fspeed_error_next = 0;
-		}
+HOOK (void, __cdecl, Update2D, 0x0140501F70, void *a1) {
+	if (fps > 0) {
+		fspeed_error = fspeed_error_next;
+		fspeed_error_next = 0;
+	}
 	Update2DIO ();
 	originalUpdate2D (a1);
 }
 
-HOOK (float, __stdcall, GetFrameSpeed, 0x140192D50)
-{
+HOOK (float, __stdcall, GetFrameSpeed, 0x140192D50) {
 	float frameSpeed = originalGetFrameSpeed ();
 
 	frameSpeed += fspeed_error;
 	float speed_rounded;
 	float speed_remainder = modff (frameSpeed, &speed_rounded);
 
-	if (fspeed_error_next == 0)
-		{
-			fspeed_error_next = speed_remainder;
-			fspeed_last_result = speed_rounded;
-		}
+	if (fspeed_error_next == 0) {
+		fspeed_error_next = speed_remainder;
+		fspeed_last_result = speed_rounded;
+	}
 
 	return speed_rounded;
 }
@@ -145,8 +138,7 @@ int32_t internalResY;
 bool fullscreen = true;
 
 HOOK (int64_t, __fastcall, ParseParameters, 0x140193630, int32_t a1,
-	  int64_t *a2)
-{
+	  int64_t *a2) {
 	if (internalResX != 0 && internalResY != 0)
 		*(uint32_t *)0x140EDA5D4 = 15;
 
@@ -157,8 +149,7 @@ HOOK (int64_t, __fastcall, ParseParameters, 0x140193630, int32_t a1,
 
 FUNCTION_PTR (void, __stdcall, UpdateTask, 0x14019B980);
 void
-UpdateFastLoader ()
-{
+UpdateFastLoader () {
 	if (*(uint32_t *)0x140EDA810 != 0)
 		return;
 
@@ -170,8 +161,7 @@ UpdateFastLoader ()
 }
 
 void
-UpdateScale (HWND DivaWindowHandle)
-{
+UpdateScale (HWND DivaWindowHandle) {
 	RECT hWindow;
 	if (GetClientRect (DivaWindowHandle, &hWindow) == 0)
 		return;
@@ -192,8 +182,7 @@ UpdateScale (HWND DivaWindowHandle)
 }
 
 void
-ApplyPatches ()
-{
+ApplyPatches () {
 	/* Just completely ignore all SYSTEM_STARTUP errors */
 	WRITE_MEMORY (0x1403F5080, uint8_t, 0xC3);
 	/* Always exit TASK_MODE_APP_ERROR on the first frame */
@@ -291,12 +280,10 @@ ApplyPatches ()
 #define WRITE_MEMORY_CONFIG_STRING(address, table)                            \
 	{                                                                         \
 		toml_datum_t data = toml_string_in (patch, "data");                   \
-		if (data.ok)                                                          \
-			{                                                                 \
-				WRITE_MEMORY_STRING (address, data.u.s,                       \
-									 strlen (data.u.s) + 1);                  \
-				free (data.u.s);                                              \
-			}                                                                 \
+		if (data.ok) {                                                        \
+			WRITE_MEMORY_STRING (address, data.u.s, strlen (data.u.s) + 1);   \
+			free (data.u.s);                                                  \
+		}                                                                     \
 	}
 
 #define WRITE_MEMORY_CONFIG_INT(address, table, type)                         \
@@ -306,23 +293,20 @@ ApplyPatches ()
 #define WRITE_MEMORY_CONFIG_INT_ARR(address, table, type)                     \
 	{                                                                         \
 		toml_array_t *dataArray = toml_array_in (table, "data");              \
-		if (!dataArray)                                                       \
-			{                                                                 \
-				free (data_type.u.s);                                         \
-				continue;                                                     \
-			}                                                                 \
-		for (int idx = 0;; idx++)                                             \
-			{                                                                 \
-				toml_datum_t dataEntry = toml_int_at (dataArray, idx);        \
-				if (!dataEntry.ok)                                            \
-					break;                                                    \
-				WRITE_MEMORY (address + idx, type, (type)dataEntry.u.i);      \
-			}                                                                 \
+		if (!dataArray) {                                                     \
+			free (data_type.u.s);                                             \
+			continue;                                                         \
+		}                                                                     \
+		for (int idx = 0;; idx++) {                                           \
+			toml_datum_t dataEntry = toml_int_at (dataArray, idx);            \
+			if (!dataEntry.ok)                                                \
+				break;                                                        \
+			WRITE_MEMORY (address + idx, type, (type)dataEntry.u.i);          \
+		}                                                                     \
 	}
 
 BOOL WINAPI
-DllMain (HMODULE mod, DWORD cause, void *ctx)
-{
+DllMain (HMODULE mod, DWORD cause, void *ctx) {
 	if (cause == DLL_PROCESS_DETACH)
 		DiposeIO ();
 	if (cause != DLL_PROCESS_ATTACH)
@@ -335,34 +319,30 @@ DllMain (HMODULE mod, DWORD cause, void *ctx)
 	if (!config)
 		return 1;
 	fps = readConfigInt (config, "fps", 0);
-	if (fps > 0)
-		{
-			expectedFrameDuration = 1000 / fps;
-			INSTALL_HOOK (GetFrameSpeed);
-		}
+	if (fps > 0) {
+		expectedFrameDuration = 1000 / fps;
+		INSTALL_HOOK (GetFrameSpeed);
+	}
 	INSTALL_HOOK (EngineUpdate);
 	INSTALL_HOOK (Update2D);
 
 	toml_table_t *internalResSection
 		= openConfigSection (config, "internalRes");
-	if (!internalResSection)
-		{
-			toml_free (config);
-			return 1;
-		}
+	if (!internalResSection) {
+		toml_free (config);
+		return 1;
+	}
 
 	internalResX = readConfigInt (internalResSection, "x", 0);
 	internalResY = readConfigInt (internalResSection, "y", 0);
-	if (internalResX != 0 && internalResY != 0)
-		{
-			if (internalResX == -1 || internalResY == -1)
-				{
-					internalResX = GetSystemMetrics (SM_CXSCREEN);
-					internalResY = GetSystemMetrics (SM_CYSCREEN);
-				}
-
-			WRITE_MEMORY (0x1409B8B68, int32_t, internalResX, internalResY);
+	if (internalResX != 0 && internalResY != 0) {
+		if (internalResX == -1 || internalResY == -1) {
+			internalResX = GetSystemMetrics (SM_CXSCREEN);
+			internalResY = GetSystemMetrics (SM_CYSCREEN);
 		}
+
+		WRITE_MEMORY (0x1409B8B68, int32_t, internalResX, internalResY);
+	}
 	fullscreen = readConfigBool (config, "fullscreen", true);
 	INSTALL_HOOK (ParseParameters);
 
@@ -374,81 +354,74 @@ DllMain (HMODULE mod, DWORD cause, void *ctx)
 	if (file == 0)
 		return 1;
 
-	do
-		{
-			if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+	do {
+		if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+			continue;
+
+		char filepath[MAX_PATH];
+		strcpy (filepath, configPath ("patches\\"));
+		strcat (filepath, fd.cFileName);
+		toml_table_t *patchesConfig = openConfig (filepath);
+		if (!patchesConfig)
+			return 1;
+
+		if (!readConfigBool (patchesConfig, "enabled", false)) {
+			toml_free (patchesConfig);
+			continue;
+		}
+
+		toml_array_t *patchesArray = toml_array_in (patchesConfig, "patch");
+		for (int i = 0;; i++) {
+			toml_table_t *patch = toml_table_at (patchesArray, i);
+			if (!patch)
+				break;
+			void *address = (void *)readConfigInt (patch, "address", 0);
+			if (address < (void *)140000000)
+				continue;
+			toml_datum_t data_type = toml_string_in (patch, "data_type");
+			if (!data_type.ok)
 				continue;
 
-			char filepath[MAX_PATH];
-			strcpy (filepath, configPath ("patches\\"));
-			strcat (filepath, fd.cFileName);
-			toml_table_t *patchesConfig = openConfig (filepath);
-			if (!patchesConfig)
-				return 1;
+			/* Switch dosent work for char* BTW
+			 This was as boring for me to write as it will be for you
+			 to read */
 
-			if (!readConfigBool (patchesConfig, "enabled", false))
-				{
-					toml_free (patchesConfig);
-					continue;
-				}
+			if (strcmp (data_type.u.s, "string") == 0)
+				WRITE_MEMORY_CONFIG_STRING (address, patch)
+			else if (strcmp (data_type.u.s, "i8") == 0)
+				WRITE_MEMORY_CONFIG_INT (address, patch, int8_t)
+			else if (strcmp (data_type.u.s, "i16") == 0)
+				WRITE_MEMORY_CONFIG_INT (address, patch, int16_t)
+			else if (strcmp (data_type.u.s, "i32") == 0)
+				WRITE_MEMORY_CONFIG_INT (address, patch, int32_t)
+			else if (strcmp (data_type.u.s, "i64") == 0)
+				WRITE_MEMORY_CONFIG_INT (address, patch, int64_t)
+			else if (strcmp (data_type.u.s, "u8") == 0)
+				WRITE_MEMORY_CONFIG_INT (address, patch, uint8_t)
+			else if (strcmp (data_type.u.s, "u16") == 0)
+				WRITE_MEMORY_CONFIG_INT (address, patch, uint16_t)
+			else if (strcmp (data_type.u.s, "u32") == 0)
+				WRITE_MEMORY_CONFIG_INT (address, patch, uint32_t)
+			else if (strcmp (data_type.u.s, "i8_arr") == 0)
+				WRITE_MEMORY_CONFIG_INT_ARR (address, patch, int8_t)
+			else if (strcmp (data_type.u.s, "i16_arr") == 0)
+				WRITE_MEMORY_CONFIG_INT_ARR (address, patch, int16_t)
+			else if (strcmp (data_type.u.s, "i32_arr") == 0)
+				WRITE_MEMORY_CONFIG_INT_ARR (address, patch, int32_t)
+			else if (strcmp (data_type.u.s, "i64_arr") == 0)
+				WRITE_MEMORY_CONFIG_INT_ARR (address, patch, int64_t)
+			else if (strcmp (data_type.u.s, "u8_arr") == 0)
+				WRITE_MEMORY_CONFIG_INT_ARR (address, patch, uint8_t)
+			else if (strcmp (data_type.u.s, "u16_arr") == 0)
+				WRITE_MEMORY_CONFIG_INT_ARR (address, patch, uint16_t)
+			else if (strcmp (data_type.u.s, "u32_arr") == 0)
+				WRITE_MEMORY_CONFIG_INT_ARR (address, patch, uint32_t)
 
-			toml_array_t *patchesArray
-				= toml_array_in (patchesConfig, "patch");
-			for (int i = 0;; i++)
-				{
-					toml_table_t *patch = toml_table_at (patchesArray, i);
-					if (!patch)
-						break;
-					void *address
-						= (void *)readConfigInt (patch, "address", 0);
-					if (address < (void *)140000000)
-						continue;
-					toml_datum_t data_type
-						= toml_string_in (patch, "data_type");
-					if (!data_type.ok)
-						continue;
-
-					/* Switch dosent work for char* BTW
-					 This was as boring for me to write as it will be for you
-					 to read */
-
-					if (strcmp (data_type.u.s, "string") == 0)
-						WRITE_MEMORY_CONFIG_STRING (address, patch)
-					else if (strcmp (data_type.u.s, "i8") == 0)
-						WRITE_MEMORY_CONFIG_INT (address, patch, int8_t)
-					else if (strcmp (data_type.u.s, "i16") == 0)
-						WRITE_MEMORY_CONFIG_INT (address, patch, int16_t)
-					else if (strcmp (data_type.u.s, "i32") == 0)
-						WRITE_MEMORY_CONFIG_INT (address, patch, int32_t)
-					else if (strcmp (data_type.u.s, "i64") == 0)
-						WRITE_MEMORY_CONFIG_INT (address, patch, int64_t)
-					else if (strcmp (data_type.u.s, "u8") == 0)
-						WRITE_MEMORY_CONFIG_INT (address, patch, uint8_t)
-					else if (strcmp (data_type.u.s, "u16") == 0)
-						WRITE_MEMORY_CONFIG_INT (address, patch, uint16_t)
-					else if (strcmp (data_type.u.s, "u32") == 0)
-						WRITE_MEMORY_CONFIG_INT (address, patch, uint32_t)
-					else if (strcmp (data_type.u.s, "i8_arr") == 0)
-						WRITE_MEMORY_CONFIG_INT_ARR (address, patch, int8_t)
-					else if (strcmp (data_type.u.s, "i16_arr") == 0)
-						WRITE_MEMORY_CONFIG_INT_ARR (address, patch, int16_t)
-					else if (strcmp (data_type.u.s, "i32_arr") == 0)
-						WRITE_MEMORY_CONFIG_INT_ARR (address, patch, int32_t)
-					else if (strcmp (data_type.u.s, "i64_arr") == 0)
-						WRITE_MEMORY_CONFIG_INT_ARR (address, patch, int64_t)
-					else if (strcmp (data_type.u.s, "u8_arr") == 0)
-						WRITE_MEMORY_CONFIG_INT_ARR (address, patch, uint8_t)
-					else if (strcmp (data_type.u.s, "u16_arr") == 0)
-						WRITE_MEMORY_CONFIG_INT_ARR (address, patch, uint16_t)
-					else if (strcmp (data_type.u.s, "u32_arr") == 0)
-						WRITE_MEMORY_CONFIG_INT_ARR (address, patch, uint32_t)
-
-					free (data_type.u.s);
-				}
-
-			toml_free (patchesConfig);
+			free (data_type.u.s);
 		}
-	while (FindNextFileA (file, &fd));
+
+		toml_free (patchesConfig);
+	} while (FindNextFileA (file, &fd));
 
 	return 1;
 }

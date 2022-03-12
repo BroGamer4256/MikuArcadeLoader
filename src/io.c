@@ -14,14 +14,12 @@ bool lastKeyboardState[0xFF];
 bool isPaused = false;
 int rumbleIntensity = 8000;
 
-struct ContactPoint
-{
+struct ContactPoint {
 	float Position;
 	bool InContact;
 } ContactPoints[2];
 
-struct TouchSliderState
-{
+struct TouchSliderState {
 	uint8_t Padding0000[112];
 
 	int32_t State;
@@ -39,16 +37,14 @@ struct TouchSliderState
 
 	uint8_t Padding013C[3128 - 52 - 40];
 
-	struct
-	{
+	struct {
 		uint8_t Padding00[2];
 		bool IsTouched;
 		uint8_t Padding[45];
 	} SensorTouched[32];
 } * sliderState;
 
-enum JvsButtons : uint32_t
-{
+enum JvsButtons : uint32_t {
 	JVS_NONE = 0 << 0x00,
 
 	JVS_TEST = 1 << 0x00,
@@ -66,21 +62,18 @@ enum JvsButtons : uint32_t
 	JVS_SW2 = 1 << 0x13,
 } lastInputState;
 
-union ButtonState
-{
+union ButtonState {
 	enum JvsButtons Buttons;
 	uint32_t State[4];
 };
 
-struct InternalButtonState
-{
+struct InternalButtonState {
 	unsigned int Released : 1;
 	unsigned int Down : 1;
 	unsigned int Tapped : 1;
 };
 
-enum SDLAxis
-{
+enum SDLAxis {
 	SDL_AXIS_NULL,
 	SDL_AXIS_LEFT_LEFT,
 	SDL_AXIS_LEFT_RIGHT,
@@ -95,8 +88,7 @@ enum SDLAxis
 	SDL_AXIS_MAX
 };
 
-struct SDLAxisState
-{
+struct SDLAxisState {
 	unsigned int LeftLeft : 1;
 	unsigned int LeftRight : 1;
 	unsigned int LeftUp : 1;
@@ -109,8 +101,7 @@ struct SDLAxisState
 	unsigned int RTriggerDown : 1;
 };
 
-struct
-{
+struct {
 	const char *string;
 	BYTE keycode;
 } ConfigKeyboardButtons[] = {
@@ -173,8 +164,7 @@ struct
 	{ "TAB", VK_TAB },
 };
 
-struct
-{
+struct {
 	const char *string;
 	SDL_GameControllerButton button;
 } ConfigControllerButtons[] = {
@@ -201,8 +191,7 @@ struct
 	{ "SDL_TOUCHPAD", SDL_CONTROLLER_BUTTON_TOUCHPAD },
 };
 
-struct
-{
+struct {
 	const char *string;
 	enum SDLAxis axis;
 } ConfigControllerAXIS[] = {
@@ -218,31 +207,22 @@ struct
 	{ "SDL_RTRIGGER", SDL_AXIS_RTRIGGER_DOWN },
 };
 
-struct Keybindings
-{
+struct Keybindings {
 	BYTE keycodes[COUNTOFARR (ConfigKeyboardButtons)];
 	SDL_GameControllerButton buttons[COUNTOFARR (ConfigControllerButtons)];
 	enum SDLAxis axis[COUNTOFARR (ConfigControllerAXIS)];
 };
 
-enum EnumType
-{
-	none,
-	keycode,
-	button,
-	axis
-};
+enum EnumType { none, keycode, button, axis };
 
-struct ConfigValue
-{
+struct ConfigValue {
 	enum EnumType type;
 	BYTE keycode;
 	SDL_GameControllerButton button;
 	enum SDLAxis axis;
 };
 
-struct InputState
-{
+struct InputState {
 	union ButtonState Tapped;
 	union ButtonState Released;
 
@@ -265,8 +245,7 @@ struct InputState
 	char Key;
 } * inputState;
 
-struct TouchPanelState
-{
+struct TouchPanelState {
 	int32_t Padding00[0x1E];
 	int32_t ConnectionState;
 	int32_t Padding01[0x06];
@@ -276,8 +255,7 @@ struct TouchPanelState
 	int32_t ContactType;
 } * currentTouchPanelState;
 
-struct MouseState
-{
+struct MouseState {
 	POINT Position;
 	POINT RelativePosition;
 	long MouseWheel;
@@ -285,8 +263,7 @@ struct MouseState
 	bool ScrolledDown;
 } currentMouseState, lastMouseState;
 
-struct TargetState
-{
+struct TargetState {
 	struct TargetState *prev;
 	struct TargetState *next;
 	uint8_t padding10[0x4];
@@ -299,8 +276,7 @@ struct TargetState
 	uint8_t padding460[0x48];
 } * targetStates;
 
-struct DwGuiDisplay
-{
+struct DwGuiDisplay {
 	void *vftable;
 	void *active;
 	void *cap;
@@ -309,14 +285,12 @@ struct DwGuiDisplay
 	void *widget;
 } * dwGuiDisplay;
 
-struct KeyBit
-{
+struct KeyBit {
 	uint32_t bit;
 	uint8_t keycode;
 };
 
-struct Camera
-{
+struct Camera {
 	float PositionX;
 	float PositionY;
 	float PositionZ;
@@ -328,8 +302,7 @@ struct Camera
 	float VerticalFov;
 } * camera;
 
-struct RawFont
-{
+struct RawFont {
 	uint32_t sprId;
 	uint8_t width1;
 	uint8_t height1;
@@ -349,8 +322,7 @@ struct RawFont
 	uint8_t padding39[0x7];
 };
 
-struct FontInfo
-{
+struct FontInfo {
 	uint32_t fontId;
 	uint8_t padding04[0x4];
 	struct RawFont *rawfont;
@@ -368,8 +340,7 @@ struct FontInfo
 	float spacingHeight;
 };
 
-struct DrawParams
-{
+struct DrawParams {
 	uint32_t colour;
 	uint32_t fillColour;
 	uint8_t clip;
@@ -392,8 +363,7 @@ struct DrawParams
 	uint16_t unk50;
 };
 
-struct Rectangle
-{
+struct Rectangle {
 	float x;
 	float y;
 	float width;
@@ -499,13 +469,11 @@ struct KeyBit keyBits[20] = {
 };
 
 bool giveUp = false;
-HOOK (bool, __stdcall, GiveUp, 0x14010EF00, void *cls)
-{
-	if (giveUp)
-		{
-			giveUp = false;
-			return true;
-		}
+HOOK (bool, __stdcall, GiveUp, 0x14010EF00, void *cls) {
+	if (giveUp) {
+		giveUp = false;
+		return true;
+	}
 	return originalGiveUp (cls);
 }
 
@@ -513,8 +481,7 @@ SDL_Window *window;
 SDL_GameController *controllers[255];
 
 void
-InitializeIO (HWND DivaWindowHandle)
-{
+InitializeIO (HWND DivaWindowHandle) {
 	toml_table_t *config = openConfig (configPath ("keyconfig.toml"));
 	if (!config)
 		return;
@@ -578,28 +545,24 @@ InitializeIO (HWND DivaWindowHandle)
 				"plugins/gamecontrollerdb.txt\n");
 	SDL_GameControllerEventState (SDL_ENABLE);
 
-	for (int i = 0; i < SDL_NumJoysticks (); i++)
-		{
-			if (!SDL_IsGameController (i))
-				continue;
+	for (int i = 0; i < SDL_NumJoysticks (); i++) {
+		if (!SDL_IsGameController (i))
+			continue;
 
-			SDL_GameController *controller = SDL_GameControllerOpen (i);
+		SDL_GameController *controller = SDL_GameControllerOpen (i);
 
-			if (!controller)
-				{
-					printf ("Could not open gamecontroller %s: %s\n",
-							SDL_GameControllerNameForIndex (i),
-							SDL_GetError ());
-					continue;
-				}
-			if (rumbleIntensity != 0
-				&& !SDL_GameControllerHasRumble (controller))
-				printf ("Warning: Controller %s does not support rumble\n",
-						SDL_GameControllerName (controller));
-
-			controllers[i] = controller;
-			break;
+		if (!controller) {
+			printf ("Could not open gamecontroller %s: %s\n",
+					SDL_GameControllerNameForIndex (i), SDL_GetError ());
+			continue;
 		}
+		if (rumbleIntensity != 0 && !SDL_GameControllerHasRumble (controller))
+			printf ("Warning: Controller %s does not support rumble\n",
+					SDL_GameControllerName (controller));
+
+		controllers[i] = controller;
+		break;
+	}
 
 	window = SDL_CreateWindowFrom (DivaWindowHandle);
 	if (window != NULL)
@@ -619,8 +582,7 @@ InitializeIO (HWND DivaWindowHandle)
 }
 
 void
-UpdateIO (HWND DivaWindowHandle)
-{
+UpdateIO (HWND DivaWindowHandle) {
 	bool HadWindowFocus = HasWindowFocus;
 	HasWindowFocus = DivaWindowHandle == NULL
 					 || GetForegroundWindow () == DivaWindowHandle;
@@ -628,79 +590,73 @@ UpdateIO (HWND DivaWindowHandle)
 	currentTouchPanelState->ConnectionState = 1;
 	sliderState->State = 3;
 
-	if (HasWindowFocus)
-		{
-			memcpy (lastKeyboardState, currentKeyboardState,
-					sizeof (currentKeyboardState));
+	if (HasWindowFocus) {
+		memcpy (lastKeyboardState, currentKeyboardState,
+				sizeof (currentKeyboardState));
 
-			for (BYTE i = 0; i < 0xFF; i++)
-				currentKeyboardState[i] = GetAsyncKeyState (i) != 0;
+		for (BYTE i = 0; i < 0xFF; i++)
+			currentKeyboardState[i] = GetAsyncKeyState (i) != 0;
 
-			PollSDLInput ();
-			PollMouseInput (DivaWindowHandle);
+		PollSDLInput ();
+		PollMouseInput (DivaWindowHandle);
 
-			if (KeyboardIsDown (VK_ESCAPE))
-				*(bool *)0x140EDA6B0 = true;
+		if (KeyboardIsDown (VK_ESCAPE))
+			*(bool *)0x140EDA6B0 = true;
 
-			UpdateUnlockedCamera (DivaWindowHandle);
-			if (unlockedCamera || isPaused)
-				return;
+		UpdateUnlockedCamera (DivaWindowHandle);
+		if (unlockedCamera || isPaused)
+			return;
 
-			UpdateInput ();
-			UpdateTouch ();
-			UpdateDwGuiInput ();
+		UpdateInput ();
+		UpdateTouch ();
+		UpdateDwGuiInput ();
 
-			if (dwGuiDisplay->on)
-				return;
+		if (dwGuiDisplay->on)
+			return;
 
-			/* Scrolling through menus */
-			int *slotsToScroll = (int *)0x14CC12470;
-			int *modulesToScroll = (int *)0x1418047EC;
-			int pvSlotsConst = *(int *)0x14CC119C8;
-			int moduleIsReccomended = *(int *)0x1418047E0;
+		/* Scrolling through menus */
+		int *slotsToScroll = (int *)0x14CC12470;
+		int *modulesToScroll = (int *)0x1418047EC;
+		int pvSlotsConst = *(int *)0x14CC119C8;
+		int moduleIsReccomended = *(int *)0x1418047E0;
 
-			if (IsMouseScrollUp)
-				{
-					if (pvSlotsConst < 26)
-						*slotsToScroll -= 1;
-					if (moduleIsReccomended == 0)
-						*modulesToScroll -= 1;
-					IsMouseScrollUp = false;
-				}
-			if (IsMouseScrollDown)
-				{
-					if (pvSlotsConst < 26)
-						*slotsToScroll += 1;
-					if (moduleIsReccomended == 0)
-						*modulesToScroll += 1;
-					IsMouseScrollDown = false;
-				}
+		if (IsMouseScrollUp) {
+			if (pvSlotsConst < 26)
+				*slotsToScroll -= 1;
+			if (moduleIsReccomended == 0)
+				*modulesToScroll -= 1;
+			IsMouseScrollUp = false;
 		}
-	else if (HadWindowFocus)
-		{
-			/* Clear state when focus lost */
-			currentTouchPanelState->XPosition = 0.0f;
-			currentTouchPanelState->YPosition = 0.0f;
-			currentTouchPanelState->ContactType = 0;
-			currentTouchPanelState->Pressure = 0.0f;
-			inputState->Released.Buttons = 0;
-			inputState->Down.Buttons = 0;
-
-			inputState->MouseX = 0;
-			inputState->MouseY = 0;
-			inputState->MouseDeltaX = 0;
-			inputState->MouseDeltaY = 0;
-
-			for (int i = 0; i < 32; i++)
-				SetSensor (i, 0);
-			for (int i = 0; i < 2; i++)
-				{
-					sliderState->SectionTouched[i] = false;
-					sliderState->SectionPositions[i] = 0.0f;
-				}
-
-			EndRumble ();
+		if (IsMouseScrollDown) {
+			if (pvSlotsConst < 26)
+				*slotsToScroll += 1;
+			if (moduleIsReccomended == 0)
+				*modulesToScroll += 1;
+			IsMouseScrollDown = false;
 		}
+	} else if (HadWindowFocus) {
+		/* Clear state when focus lost */
+		currentTouchPanelState->XPosition = 0.0f;
+		currentTouchPanelState->YPosition = 0.0f;
+		currentTouchPanelState->ContactType = 0;
+		currentTouchPanelState->Pressure = 0.0f;
+		inputState->Released.Buttons = 0;
+		inputState->Down.Buttons = 0;
+
+		inputState->MouseX = 0;
+		inputState->MouseY = 0;
+		inputState->MouseDeltaX = 0;
+		inputState->MouseDeltaY = 0;
+
+		for (int i = 0; i < 32; i++)
+			SetSensor (i, 0);
+		for (int i = 0; i < 2; i++) {
+			sliderState->SectionTouched[i] = false;
+			sliderState->SectionPositions[i] = 0.0f;
+		}
+
+		EndRumble ();
+	}
 }
 
 FUNCTION_PTR (void, __stdcall, DivaDrawText, 0x140198500,
@@ -711,14 +667,13 @@ FUNCTION_PTR (struct FontInfo *, __thiscall, GetFontInfoFromID, 0x140196510,
 FUNCTION_PTR (void, __stdcall, FillRectangle, 0x140198D80,
 			  struct DrawParams *drawParam, const struct Rectangle *rect);
 void
-DrawMenu (int index, const char **items, int items_len)
-{
+DrawMenu (int index, const char **items, int items_len) {
 	struct FontInfo fontInfo;
 	fontInfo = *GetFontInfoFromID (&fontInfo, 0x11);
 
 	struct DrawParams drawParam = { 0 };
-	drawParam.colour = 0xC0000000;
-	drawParam.fillColour = 0xC0000000;
+	drawParam.colour = 0xFF000000;
+	drawParam.fillColour = 0xFF000000;
 	drawParam.layer = 0x18;
 	drawParam.unk24 = 0xD;
 	drawParam.textCurrentLocX = (1280 / 2) - 100;
@@ -731,18 +686,16 @@ DrawMenu (int index, const char **items, int items_len)
 	rect.height = 720;
 	FillRectangle (&drawParam, &rect);
 	drawParam.layer = 0x19;
-	for (int i = 0; i < items_len; i++)
-		{
-			char buf[32];
-			sprintf (buf, "%s\n", items[i]);
-			drawParam.colour = (i == index ? 0xFF00FFFF : 0xFFFFFFFF);
-			DivaDrawText (&drawParam, 0x1005, buf, 32);
-		}
+	for (int i = 0; i < items_len; i++) {
+		char buf[32];
+		sprintf (buf, "%s\n", items[i]);
+		drawParam.colour = (i == index ? 0xFF00FFFF : 0xFFFFFFFF);
+		DivaDrawText (&drawParam, 0x1005, buf, 32);
+	}
 }
 
 void
-Update2DIO ()
-{
+Update2DIO () {
 	DrawTestMenu ();
 	DrawPauseMenu ();
 }
@@ -758,8 +711,7 @@ uint8_t framespeedOriginal[4];
 uint8_t ageageHairOriginal[3];
 bool playstates[8]; /* Should be enough */
 void
-DrawPauseMenu ()
-{
+DrawPauseMenu () {
 	if (*(uint32_t *)0x140EDA82C != 13)
 		isPaused = false;
 	if (!isPaused)
@@ -782,98 +734,90 @@ DrawPauseMenu ()
 	if (pauseIndex < 0)
 		pauseIndex = 2;
 
-	if (firstPauseFrame)
-		{
-			/* Clear state */
-			currentTouchPanelState->XPosition = 0.0f;
-			currentTouchPanelState->YPosition = 0.0f;
-			currentTouchPanelState->ContactType = 0;
-			currentTouchPanelState->Pressure = 0.0f;
-			inputState->Released.Buttons = 0;
-			inputState->Down.Buttons = 0;
+	if (firstPauseFrame) {
+		/* Clear state */
+		currentTouchPanelState->XPosition = 0.0f;
+		currentTouchPanelState->YPosition = 0.0f;
+		currentTouchPanelState->ContactType = 0;
+		currentTouchPanelState->Pressure = 0.0f;
+		inputState->Released.Buttons = 0;
+		inputState->Down.Buttons = 0;
 
-			inputState->MouseX = 0;
-			inputState->MouseY = 0;
-			inputState->MouseDeltaX = 0;
-			inputState->MouseDeltaY = 0;
+		inputState->MouseX = 0;
+		inputState->MouseY = 0;
+		inputState->MouseDeltaX = 0;
+		inputState->MouseDeltaY = 0;
 
-			for (int i = 0; i < 32; i++)
-				SetSensor (i, 0);
-			for (int i = 0; i < 2; i++)
-				{
-					sliderState->SectionTouched[i] = false;
-					sliderState->SectionPositions[i] = 0.0f;
-				}
-
-			EndRumble ();
-
-			firstPauseFrame = false;
-			PauseDSC ();
-			memcpy (&aetMoveOriginal, (void *)0x1401703B3, 8);
-			memcpy (&framespeedOriginal, (void *)0x140192D50, 4);
-			memcpy (&ageageHairOriginal, (void *)0x14054352C, 3);
-			WRITE_NOP (0x1401703B3, 8);
-			WRITE_MEMORY (0x140192D50, uint8_t, 0x0F, 0x57, 0xC0, 0xC3);
-			WRITE_MEMORY (0x14054352C, uint8_t, 0x0F, 0x57, 0xDB);
-
-			uint64_t audioMixer = *(uint64_t *)0x14CC61190;
-			uint64_t audioStreams = *(uint64_t *)(audioMixer + 0x18);
-			int32_t audioStreamsLen = *(uint64_t *)(audioMixer + 0x20);
-
-			for (int i = 0; i < audioStreamsLen; i++)
-				{
-					uint32_t *state
-						= (uint32_t *)(audioStreams + i * 0x50 + 0x18);
-					playstates[i] = *state;
-					*state = 0;
-				}
+		for (int i = 0; i < 32; i++)
+			SetSensor (i, 0);
+		for (int i = 0; i < 2; i++) {
+			sliderState->SectionTouched[i] = false;
+			sliderState->SectionPositions[i] = 0.0f;
 		}
-	else if (IsButtonTapped (START) || IsButtonTapped (CIRCLE))
-		{
-			firstPauseFrame = true;
-			isPaused = false;
-			if (pauseIndex == 2)
-				giveUp = true;
 
-			UnPauseDSC ();
-			for (int i = 0; i < 8; i++)
-				WRITE_MEMORY (0x1401703B3 + i, uint8_t, aetMoveOriginal[i]);
-			for (int i = 0; i < 4; i++)
-				WRITE_MEMORY (0x140192D50 + i, uint8_t, framespeedOriginal[i]);
-			for (int i = 0; i < 3; i++)
-				WRITE_MEMORY (0x14054352C + i, uint8_t, ageageHairOriginal[i]);
+		EndRumble ();
 
-			uint64_t audioMixer = *(uint64_t *)0x14CC61190;
-			uint64_t audioStreams = *(uint64_t *)(audioMixer + 0x18);
-			int32_t audioStreamsLen = *(uint64_t *)(audioMixer + 0x20);
+		firstPauseFrame = false;
+		PauseDSC ();
+		memcpy (&aetMoveOriginal, (void *)0x1401703B3, 8);
+		memcpy (&framespeedOriginal, (void *)0x140192D50, 4);
+		memcpy (&ageageHairOriginal, (void *)0x14054352C, 3);
+		WRITE_NOP (0x1401703B3, 8);
+		WRITE_MEMORY (0x140192D50, uint8_t, 0x0F, 0x57, 0xC0, 0xC3);
+		WRITE_MEMORY (0x14054352C, uint8_t, 0x0F, 0x57, 0xDB);
 
-			for (int i = 0; i < audioStreamsLen; i++)
-				{
-					uint32_t *state
-						= (uint32_t *)(audioStreams + i * 0x50 + 0x18);
-					*state = playstates[i];
-				}
+		uint64_t audioMixer = *(uint64_t *)0x14CC61190;
+		uint64_t audioStreams = *(uint64_t *)(audioMixer + 0x18);
+		int32_t audioStreamsLen = *(uint64_t *)(audioMixer + 0x20);
 
-			if (pauseIndex != 1)
-				return;
+		for (int i = 0; i < audioStreamsLen; i++) {
+			uint32_t *state = (uint32_t *)(audioStreams + i * 0x50 + 0x18);
+			playstates[i] = *state;
+			*state = 0;
+		}
+	} else if (IsButtonTapped (START) || IsButtonTapped (CIRCLE)) {
+		firstPauseFrame = true;
+		isPaused = false;
+		if (pauseIndex == 2)
+			giveUp = true;
 
-			WRITE_MEMORY (0x1401038CD, uint8_t, 0x15);
-			WRITE_MEMORY (0x140103B94, uint8_t, 0x18);
-			*(uint8_t *)0x140D0B512 = 0;
-			*(uint8_t *)0x140D0B524 = 8;
-			*(int32_t *)0x140CDD8D8 = 0x11;
-			while (*(int32_t *)0x140CDD8D8 < 0x18)
-				LoadPV (0x140CDD8D0);
-			*(int32_t *)0x140D0A9BC = 0;
-			*(int32_t *)0x140D0A9B8 = 0;
-			*(int32_t *)0x140D0A9C0 = 0;
-			*(uint8_t *)0x140D0A50C = 0;
-			*(int32_t *)0x140D0AA0F = 0;
-			WRITE_MEMORY (0x1401038CD, uint8_t, 0x12);
-			WRITE_MEMORY (0x140103B94, uint8_t, 0x16);
+		UnPauseDSC ();
+		for (int i = 0; i < 8; i++)
+			WRITE_MEMORY (0x1401703B3 + i, uint8_t, aetMoveOriginal[i]);
+		for (int i = 0; i < 4; i++)
+			WRITE_MEMORY (0x140192D50 + i, uint8_t, framespeedOriginal[i]);
+		for (int i = 0; i < 3; i++)
+			WRITE_MEMORY (0x14054352C + i, uint8_t, ageageHairOriginal[i]);
 
+		uint64_t audioMixer = *(uint64_t *)0x14CC61190;
+		uint64_t audioStreams = *(uint64_t *)(audioMixer + 0x18);
+		int32_t audioStreamsLen = *(uint64_t *)(audioMixer + 0x20);
+
+		for (int i = 0; i < audioStreamsLen; i++) {
+			uint32_t *state = (uint32_t *)(audioStreams + i * 0x50 + 0x18);
+			*state = playstates[i];
+		}
+
+		if (pauseIndex != 1)
 			return;
-		}
+
+		WRITE_MEMORY (0x1401038CD, uint8_t, 0x15);
+		WRITE_MEMORY (0x140103B94, uint8_t, 0x18);
+		*(uint8_t *)0x140D0B512 = 0;
+		*(uint8_t *)0x140D0B524 = 8;
+		*(int32_t *)0x140CDD8D8 = 0x11;
+		while (*(int32_t *)0x140CDD8D8 < 0x18)
+			LoadPV (0x140CDD8D0);
+		*(int32_t *)0x140D0A9BC = 0;
+		*(int32_t *)0x140D0A9B8 = 0;
+		*(int32_t *)0x140D0A9C0 = 0;
+		*(uint8_t *)0x140D0A50C = 0;
+		*(int32_t *)0x140D0AA0F = 0;
+		WRITE_MEMORY (0x1401038CD, uint8_t, 0x12);
+		WRITE_MEMORY (0x140103B94, uint8_t, 0x16);
+
+		return;
+	}
 
 	DrawMenu (pauseIndex, PauseMenuItems, 3);
 }
@@ -890,8 +834,7 @@ int dataTestIndex = 20;
 FUNCTION_PTR (void, __stdcall, ChangeSubState, 0x140195260, uint32_t gameState,
 			  uint32_t subState);
 void
-DrawTestMenu ()
-{
+DrawTestMenu () {
 	if (*(uint32_t *)0x140EDA810 != 3)
 		ShouldDrawTestMenu = false;
 	if (!ShouldDrawTestMenu)
@@ -914,116 +857,98 @@ DrawTestMenu ()
 	if (dataTestIndex < 20)
 		dataTestIndex = 39;
 
-	if (IsButtonTapped (START))
-		{
-			ShouldDrawTestMenu = false;
-			ChangeSubState (3, dataTestIndex - 1);
-		}
+	if (IsButtonTapped (START)) {
+		ShouldDrawTestMenu = false;
+		ChangeSubState (3, dataTestIndex - 1);
+	}
 
 	DrawMenu (dataTestIndex - 20, DataTestNames, 20);
 }
 
 void
-DiposeIO ()
-{
+DiposeIO () {
 	SDL_DestroyWindow (window);
 	SDL_Quit ();
 }
 
 struct ConfigValue
-StringToConfigEnum (char *value)
-{
+StringToConfigEnum (char *value) {
 	struct ConfigValue rval = { 0 };
 	for (int i = 0; i < COUNTOFARR (ConfigKeyboardButtons); ++i)
-		if (!strcmp (value, ConfigKeyboardButtons[i].string))
-			{
-				rval.type = keycode;
-				rval.keycode = ConfigKeyboardButtons[i].keycode;
-				return rval;
-			}
+		if (!strcmp (value, ConfigKeyboardButtons[i].string)) {
+			rval.type = keycode;
+			rval.keycode = ConfigKeyboardButtons[i].keycode;
+			return rval;
+		}
 	for (int i = 0; i < COUNTOFARR (ConfigControllerButtons); ++i)
-		if (!strcmp (value, ConfigControllerButtons[i].string))
-			{
-				rval.type = button;
-				rval.button = ConfigControllerButtons[i].button;
-				return rval;
-			}
+		if (!strcmp (value, ConfigControllerButtons[i].string)) {
+			rval.type = button;
+			rval.button = ConfigControllerButtons[i].button;
+			return rval;
+		}
 	for (int i = 0; i < COUNTOFARR (ConfigControllerAXIS); ++i)
-		if (!strcmp (value, ConfigControllerAXIS[i].string))
-			{
-				rval.type = axis;
-				rval.axis = ConfigControllerAXIS[i].axis;
-				return rval;
-			}
+		if (!strcmp (value, ConfigControllerAXIS[i].string)) {
+			rval.type = axis;
+			rval.axis = ConfigControllerAXIS[i].axis;
+			return rval;
+		}
 
 	printf ("Error at StringToConfigEnum (%s): Unknown value\n", value);
 	return rval;
 }
 
 void
-SetConfigValue (toml_table_t *table, char *key, struct Keybindings *keybind)
-{
+SetConfigValue (toml_table_t *table, char *key, struct Keybindings *keybind) {
 	toml_array_t *array = toml_array_in (table, key);
-	if (!array)
-		{
-			printf ("Error at SetConfigValue (%s): Cannot find array\n", key);
-			return;
-		}
+	if (!array) {
+		printf ("Error at SetConfigValue (%s): Cannot find array\n", key);
+		return;
+	}
 
 	memset (keybind, 0, sizeof (*keybind));
 	for (int i = 0; i < COUNTOFARR (keybind->buttons); i++)
 		keybind->buttons[i] = SDL_CONTROLLER_BUTTON_INVALID;
 
-	for (int i = 0;; i++)
-		{
-			toml_datum_t bind = toml_string_at (array, i);
-			if (!bind.ok)
-				break;
-			struct ConfigValue value = StringToConfigEnum (bind.u.s);
-			free (bind.u.s);
+	for (int i = 0;; i++) {
+		toml_datum_t bind = toml_string_at (array, i);
+		if (!bind.ok)
+			break;
+		struct ConfigValue value = StringToConfigEnum (bind.u.s);
+		free (bind.u.s);
 
-			switch (value.type)
-				{
-				case keycode:
-					for (int i = 0; i < COUNTOFARR (keybind->keycodes); i++)
-						{
-							if (keybind->keycodes[i] == 0)
-								{
-									keybind->keycodes[i] = value.keycode;
-									break;
-								}
-						}
-					break;
-				case button:
-					for (int i = 0; i < COUNTOFARR (keybind->buttons); i++)
-						{
-							if (keybind->buttons[i]
-								== SDL_CONTROLLER_BUTTON_INVALID)
-								{
-									keybind->buttons[i] = value.button;
-									break;
-								}
-						}
-					break;
-				case axis:
-					for (int i = 0; i < COUNTOFARR (keybind->axis); i++)
-						{
-							if (keybind->axis[i] == 0)
-								{
-									keybind->axis[i] = value.axis;
-									break;
-								}
-						}
-					break;
-				default:
+		switch (value.type) {
+		case keycode:
+			for (int i = 0; i < COUNTOFARR (keybind->keycodes); i++) {
+				if (keybind->keycodes[i] == 0) {
+					keybind->keycodes[i] = value.keycode;
 					break;
 				}
+			}
+			break;
+		case button:
+			for (int i = 0; i < COUNTOFARR (keybind->buttons); i++) {
+				if (keybind->buttons[i] == SDL_CONTROLLER_BUTTON_INVALID) {
+					keybind->buttons[i] = value.button;
+					break;
+				}
+			}
+			break;
+		case axis:
+			for (int i = 0; i < COUNTOFARR (keybind->axis); i++) {
+				if (keybind->axis[i] == 0) {
+					keybind->axis[i] = value.axis;
+					break;
+				}
+			}
+			break;
+		default:
+			break;
 		}
+	}
 }
 
 void
-PollMouseInput (HWND DivaWindowHandle)
-{
+PollMouseInput (HWND DivaWindowHandle) {
 	lastMouseState = currentMouseState;
 
 	GetCursorPos (&currentMouseState.Position);
@@ -1039,64 +964,54 @@ PollMouseInput (HWND DivaWindowHandle)
 	int *fbWidth = (int *)0x1411ABCA8;
 	int *fbHeight = (int *)0x1411ABCAC;
 
-	if ((fbWidth != gameWidth) && (fbHeight != gameHeight))
-		{
-			float scale;
-			float xoffset = (16.0f / 9.0f) * hWindow.bottom;
-			if (xoffset != hWindow.right)
-				{
-					scale = xoffset / hWindow.right;
-					xoffset = (hWindow.right / 2) - (xoffset / 2);
-				}
-			else
-				{
-					xoffset = 0;
-					scale = 1;
-				}
-
-			currentMouseState.RelativePosition.x
-				= ((currentMouseState.RelativePosition.x - xoffset)
-				   * *gameWidth / hWindow.right)
-				  / scale;
-			currentMouseState.RelativePosition.y
-				= currentMouseState.RelativePosition.y * *gameHeight
-				  / hWindow.bottom;
+	if ((fbWidth != gameWidth) && (fbHeight != gameHeight)) {
+		float scale;
+		float xoffset = (16.0f / 9.0f) * hWindow.bottom;
+		if (xoffset != hWindow.right) {
+			scale = xoffset / hWindow.right;
+			xoffset = (hWindow.right / 2) - (xoffset / 2);
+		} else {
+			xoffset = 0;
+			scale = 1;
 		}
+
+		currentMouseState.RelativePosition.x
+			= ((currentMouseState.RelativePosition.x - xoffset) * *gameWidth
+			   / hWindow.right)
+			  / scale;
+		currentMouseState.RelativePosition.y
+			= currentMouseState.RelativePosition.y * *gameHeight
+			  / hWindow.bottom;
+	}
 }
 
 inline bool
-KeyboardIsDown (BYTE keycode)
-{
+KeyboardIsDown (BYTE keycode) {
 	return currentKeyboardState[keycode];
 }
 
 inline bool
-KeyboardIsUp (BYTE keycode)
-{
+KeyboardIsUp (BYTE keycode) {
 	return !KeyboardIsDown (keycode);
 }
 
 inline bool
-KeyboardIsTapped (BYTE keycode)
-{
+KeyboardIsTapped (BYTE keycode) {
 	return KeyboardIsDown (keycode) && KeyboardWasUp (keycode);
 }
 
 inline bool
-KeyboardIsReleased (BYTE keycode)
-{
+KeyboardIsReleased (BYTE keycode) {
 	return KeyboardIsUp (keycode) && KeyboardWasDown (keycode);
 }
 
 inline bool
-KeyboardWasDown (BYTE keycode)
-{
+KeyboardWasDown (BYTE keycode) {
 	return lastKeyboardState[keycode];
 }
 
 inline bool
-KeyboardWasUp (BYTE keycode)
-{
+KeyboardWasUp (BYTE keycode) {
 	return !KeyboardWasDown (keycode);
 }
 
@@ -1107,263 +1022,230 @@ struct SDLAxisState currentControllerAxisState;
 struct SDLAxisState lastControllerAxisState;
 
 void
-PollSDLInput ()
-{
+PollSDLInput () {
 	memcpy (lastControllerButtonsState, currentControllerButtonsState,
 			SDL_CONTROLLER_BUTTON_MAX);
 	lastControllerAxisState = currentControllerAxisState;
 
 	SDL_Event event;
-	while (SDL_PollEvent (&event) != 0)
-		{
-			switch (event.type)
-				{
-				case SDL_CONTROLLERDEVICEADDED:
-					if (!SDL_IsGameController (event.cdevice.which))
-						break;
+	while (SDL_PollEvent (&event) != 0) {
+		switch (event.type) {
+		case SDL_CONTROLLERDEVICEADDED:
+			if (!SDL_IsGameController (event.cdevice.which))
+				break;
 
-					SDL_GameController *controller
-						= SDL_GameControllerOpen (event.cdevice.which);
+			SDL_GameController *controller
+				= SDL_GameControllerOpen (event.cdevice.which);
 
-					if (!controller)
-						{
-							printf ("Error at PollSDLInput (): Could not open "
-									"gamecontroller %s: %s\n",
-									SDL_GameControllerNameForIndex (
-										event.cdevice.which),
-									SDL_GetError ());
-							continue;
-						}
-					if (rumbleIntensity != 0
-						&& !SDL_GameControllerHasRumble (controller))
-						printf (
-							"Warning: Controller %s does not support rumble\n",
-							SDL_GameControllerName (controller));
+			if (!controller) {
+				printf ("Error at PollSDLInput (): Could not open "
+						"gamecontroller %s: %s\n",
+						SDL_GameControllerNameForIndex (event.cdevice.which),
+						SDL_GetError ());
+				continue;
+			}
+			if (rumbleIntensity != 0
+				&& !SDL_GameControllerHasRumble (controller))
+				printf ("Warning: Controller %s does not support rumble\n",
+						SDL_GameControllerName (controller));
 
-					controllers[event.cdevice.which] = controller;
-					break;
-				case SDL_CONTROLLERDEVICEREMOVED:
-					if (!SDL_IsGameController (event.cdevice.which))
-						break;
-					SDL_GameControllerClose (controllers[event.cdevice.which]);
+			controllers[event.cdevice.which] = controller;
+			break;
+		case SDL_CONTROLLERDEVICEREMOVED:
+			if (!SDL_IsGameController (event.cdevice.which))
+				break;
+			SDL_GameControllerClose (controllers[event.cdevice.which]);
 
+			break;
+		case SDL_MOUSEWHEEL:
+			if (event.wheel.y > 0)
+				IsMouseScrollUp = true;
+			else if (event.wheel.y < 0)
+				IsMouseScrollDown = true;
+			break;
+		case SDL_CONTROLLERBUTTONUP:
+		case SDL_CONTROLLERBUTTONDOWN:
+			currentControllerButtonsState[event.cbutton.button]
+				= event.cbutton.state;
+			break;
+		case SDL_CONTROLLERAXISMOTION:
+			if (event.caxis.value > deadzone) {
+				switch (event.caxis.axis) {
+				case SDL_CONTROLLER_AXIS_LEFTX:
+					currentControllerAxisState.LeftRight = 1;
 					break;
-				case SDL_MOUSEWHEEL:
-					if (event.wheel.y > 0)
-						IsMouseScrollUp = true;
-					else if (event.wheel.y < 0)
-						IsMouseScrollDown = true;
+				case SDL_CONTROLLER_AXIS_LEFTY:
+					currentControllerAxisState.LeftDown = 1;
 					break;
-				case SDL_CONTROLLERBUTTONUP:
-				case SDL_CONTROLLERBUTTONDOWN:
-					currentControllerButtonsState[event.cbutton.button]
-						= event.cbutton.state;
+				case SDL_CONTROLLER_AXIS_RIGHTX:
+					currentControllerAxisState.RightRight = 1;
 					break;
-				case SDL_CONTROLLERAXISMOTION:
-					if (event.caxis.value > deadzone)
-						{
-							switch (event.caxis.axis)
-								{
-								case SDL_CONTROLLER_AXIS_LEFTX:
-									currentControllerAxisState.LeftRight = 1;
-									break;
-								case SDL_CONTROLLER_AXIS_LEFTY:
-									currentControllerAxisState.LeftDown = 1;
-									break;
-								case SDL_CONTROLLER_AXIS_RIGHTX:
-									currentControllerAxisState.RightRight = 1;
-									break;
-								case SDL_CONTROLLER_AXIS_RIGHTY:
-									currentControllerAxisState.RightDown = 1;
-									break;
-								case SDL_CONTROLLER_AXIS_TRIGGERLEFT:
-									currentControllerAxisState.LTriggerDown
-										= 1;
-									break;
-								case SDL_CONTROLLER_AXIS_TRIGGERRIGHT:
-									currentControllerAxisState.RTriggerDown
-										= 1;
-									break;
-								}
-						}
-					else if (event.caxis.value < -deadzone)
-						{
-							switch (event.caxis.axis)
-								{
-								case SDL_CONTROLLER_AXIS_LEFTX:
-									currentControllerAxisState.LeftLeft = 1;
-									break;
-								case SDL_CONTROLLER_AXIS_LEFTY:
-									currentControllerAxisState.LeftUp = 1;
-									break;
-								case SDL_CONTROLLER_AXIS_RIGHTX:
-									currentControllerAxisState.RightLeft = 1;
-									break;
-								case SDL_CONTROLLER_AXIS_RIGHTY:
-									currentControllerAxisState.RightUp = 1;
-									break;
-								}
-						}
-					else
-						{
-							switch (event.caxis.axis)
-								{
-								case SDL_CONTROLLER_AXIS_LEFTX:
-									currentControllerAxisState.LeftRight = 0;
-									currentControllerAxisState.LeftLeft = 0;
-									break;
-								case SDL_CONTROLLER_AXIS_LEFTY:
-									currentControllerAxisState.LeftDown = 0;
-									currentControllerAxisState.LeftUp = 0;
-									break;
-								case SDL_CONTROLLER_AXIS_RIGHTX:
-									currentControllerAxisState.RightRight = 0;
-									currentControllerAxisState.RightLeft = 0;
-									break;
-								case SDL_CONTROLLER_AXIS_RIGHTY:
-									currentControllerAxisState.RightDown = 0;
-									currentControllerAxisState.RightUp = 0;
-									break;
-								case SDL_CONTROLLER_AXIS_TRIGGERLEFT:
-									currentControllerAxisState.LTriggerDown
-										= 0;
-									break;
-								case SDL_CONTROLLER_AXIS_TRIGGERRIGHT:
-									currentControllerAxisState.RTriggerDown
-										= 0;
-									break;
-								}
-						}
+				case SDL_CONTROLLER_AXIS_RIGHTY:
+					currentControllerAxisState.RightDown = 1;
+					break;
+				case SDL_CONTROLLER_AXIS_TRIGGERLEFT:
+					currentControllerAxisState.LTriggerDown = 1;
+					break;
+				case SDL_CONTROLLER_AXIS_TRIGGERRIGHT:
+					currentControllerAxisState.RTriggerDown = 1;
 					break;
 				}
+			} else if (event.caxis.value < -deadzone) {
+				switch (event.caxis.axis) {
+				case SDL_CONTROLLER_AXIS_LEFTX:
+					currentControllerAxisState.LeftLeft = 1;
+					break;
+				case SDL_CONTROLLER_AXIS_LEFTY:
+					currentControllerAxisState.LeftUp = 1;
+					break;
+				case SDL_CONTROLLER_AXIS_RIGHTX:
+					currentControllerAxisState.RightLeft = 1;
+					break;
+				case SDL_CONTROLLER_AXIS_RIGHTY:
+					currentControllerAxisState.RightUp = 1;
+					break;
+				}
+			} else {
+				switch (event.caxis.axis) {
+				case SDL_CONTROLLER_AXIS_LEFTX:
+					currentControllerAxisState.LeftRight = 0;
+					currentControllerAxisState.LeftLeft = 0;
+					break;
+				case SDL_CONTROLLER_AXIS_LEFTY:
+					currentControllerAxisState.LeftDown = 0;
+					currentControllerAxisState.LeftUp = 0;
+					break;
+				case SDL_CONTROLLER_AXIS_RIGHTX:
+					currentControllerAxisState.RightRight = 0;
+					currentControllerAxisState.RightLeft = 0;
+					break;
+				case SDL_CONTROLLER_AXIS_RIGHTY:
+					currentControllerAxisState.RightDown = 0;
+					currentControllerAxisState.RightUp = 0;
+					break;
+				case SDL_CONTROLLER_AXIS_TRIGGERLEFT:
+					currentControllerAxisState.LTriggerDown = 0;
+					break;
+				case SDL_CONTROLLER_AXIS_TRIGGERRIGHT:
+					currentControllerAxisState.RTriggerDown = 0;
+					break;
+				}
+			}
+			break;
 		}
+	}
 }
 
 inline bool
-ControllerButtonIsDown (SDL_GameControllerButton button)
-{
+ControllerButtonIsDown (SDL_GameControllerButton button) {
 	return currentControllerButtonsState[button];
 }
 
 inline bool
-ControllerButtonIsUp (SDL_GameControllerButton button)
-{
+ControllerButtonIsUp (SDL_GameControllerButton button) {
 	return !ControllerButtonIsDown (button);
 }
 
 inline bool
-ControllerButtonWasDown (SDL_GameControllerButton button)
-{
+ControllerButtonWasDown (SDL_GameControllerButton button) {
 	return lastControllerButtonsState[button];
 }
 
 inline bool
-ControllerButtonWasUp (SDL_GameControllerButton button)
-{
+ControllerButtonWasUp (SDL_GameControllerButton button) {
 	return !ControllerButtonWasDown (button);
 }
 
 inline bool
-ControllerButtonIsTapped (SDL_GameControllerButton button)
-{
+ControllerButtonIsTapped (SDL_GameControllerButton button) {
 	return ControllerButtonIsDown (button) && ControllerButtonWasUp (button);
 }
 
 inline bool
-ControllerButtonIsReleased (SDL_GameControllerButton button)
-{
+ControllerButtonIsReleased (SDL_GameControllerButton button) {
 	return ControllerButtonIsUp (button) && ControllerButtonWasDown (button);
 }
 
 inline bool
-ControllerAxisIsDown (enum SDLAxis axis)
-{
-	switch (axis)
-		{
-		case SDL_AXIS_LEFT_LEFT:
-			return currentControllerAxisState.LeftLeft;
-		case SDL_AXIS_LEFT_RIGHT:
-			return currentControllerAxisState.LeftRight;
-		case SDL_AXIS_LEFT_UP:
-			return currentControllerAxisState.LeftUp;
-		case SDL_AXIS_LEFT_DOWN:
-			return currentControllerAxisState.LeftDown;
-		case SDL_AXIS_RIGHT_LEFT:
-			return currentControllerAxisState.RightLeft;
-		case SDL_AXIS_RIGHT_RIGHT:
-			return currentControllerAxisState.RightRight;
-		case SDL_AXIS_RIGHT_UP:
-			return currentControllerAxisState.RightUp;
-		case SDL_AXIS_RIGHT_DOWN:
-			return currentControllerAxisState.RightDown;
-		case SDL_AXIS_LTRIGGER_DOWN:
-			return currentControllerAxisState.LTriggerDown;
-		case SDL_AXIS_RTRIGGER_DOWN:
-			return currentControllerAxisState.RTriggerDown;
-		case SDL_AXIS_NULL:
-		case SDL_AXIS_MAX:
-			return false;
-		}
+ControllerAxisIsDown (enum SDLAxis axis) {
+	switch (axis) {
+	case SDL_AXIS_LEFT_LEFT:
+		return currentControllerAxisState.LeftLeft;
+	case SDL_AXIS_LEFT_RIGHT:
+		return currentControllerAxisState.LeftRight;
+	case SDL_AXIS_LEFT_UP:
+		return currentControllerAxisState.LeftUp;
+	case SDL_AXIS_LEFT_DOWN:
+		return currentControllerAxisState.LeftDown;
+	case SDL_AXIS_RIGHT_LEFT:
+		return currentControllerAxisState.RightLeft;
+	case SDL_AXIS_RIGHT_RIGHT:
+		return currentControllerAxisState.RightRight;
+	case SDL_AXIS_RIGHT_UP:
+		return currentControllerAxisState.RightUp;
+	case SDL_AXIS_RIGHT_DOWN:
+		return currentControllerAxisState.RightDown;
+	case SDL_AXIS_LTRIGGER_DOWN:
+		return currentControllerAxisState.LTriggerDown;
+	case SDL_AXIS_RTRIGGER_DOWN:
+		return currentControllerAxisState.RTriggerDown;
+	case SDL_AXIS_NULL:
+	case SDL_AXIS_MAX:
+		return false;
+	}
 }
 
 inline bool
-ControllerAxisIsUp (enum SDLAxis axis)
-{
+ControllerAxisIsUp (enum SDLAxis axis) {
 	return !ControllerAxisIsDown (axis);
 }
 
 inline bool
-ControllerAxisWasDown (enum SDLAxis axis)
-{
-	switch (axis)
-		{
-		case SDL_AXIS_LEFT_LEFT:
-			return lastControllerAxisState.LeftLeft;
-		case SDL_AXIS_LEFT_RIGHT:
-			return lastControllerAxisState.LeftRight;
-		case SDL_AXIS_LEFT_UP:
-			return lastControllerAxisState.LeftUp;
-		case SDL_AXIS_LEFT_DOWN:
-			return lastControllerAxisState.LeftDown;
-		case SDL_AXIS_RIGHT_LEFT:
-			return lastControllerAxisState.RightLeft;
-		case SDL_AXIS_RIGHT_RIGHT:
-			return lastControllerAxisState.RightRight;
-		case SDL_AXIS_RIGHT_UP:
-			return lastControllerAxisState.RightUp;
-		case SDL_AXIS_RIGHT_DOWN:
-			return lastControllerAxisState.RightDown;
-		case SDL_AXIS_LTRIGGER_DOWN:
-			return lastControllerAxisState.LTriggerDown;
-		case SDL_AXIS_RTRIGGER_DOWN:
-			return lastControllerAxisState.RTriggerDown;
-		case SDL_AXIS_NULL:
-		case SDL_AXIS_MAX:
-			return false;
-		}
+ControllerAxisWasDown (enum SDLAxis axis) {
+	switch (axis) {
+	case SDL_AXIS_LEFT_LEFT:
+		return lastControllerAxisState.LeftLeft;
+	case SDL_AXIS_LEFT_RIGHT:
+		return lastControllerAxisState.LeftRight;
+	case SDL_AXIS_LEFT_UP:
+		return lastControllerAxisState.LeftUp;
+	case SDL_AXIS_LEFT_DOWN:
+		return lastControllerAxisState.LeftDown;
+	case SDL_AXIS_RIGHT_LEFT:
+		return lastControllerAxisState.RightLeft;
+	case SDL_AXIS_RIGHT_RIGHT:
+		return lastControllerAxisState.RightRight;
+	case SDL_AXIS_RIGHT_UP:
+		return lastControllerAxisState.RightUp;
+	case SDL_AXIS_RIGHT_DOWN:
+		return lastControllerAxisState.RightDown;
+	case SDL_AXIS_LTRIGGER_DOWN:
+		return lastControllerAxisState.LTriggerDown;
+	case SDL_AXIS_RTRIGGER_DOWN:
+		return lastControllerAxisState.RTriggerDown;
+	case SDL_AXIS_NULL:
+	case SDL_AXIS_MAX:
+		return false;
+	}
 }
 
 inline bool
-ControllerAxisWasUp (enum SDLAxis axis)
-{
+ControllerAxisWasUp (enum SDLAxis axis) {
 	return !ControllerAxisWasDown (axis);
 }
 
 inline bool
-ControllerAxisIsTapped (enum SDLAxis axis)
-{
+ControllerAxisIsTapped (enum SDLAxis axis) {
 	return ControllerAxisIsDown (axis) && ControllerAxisWasUp (axis);
 }
 
 inline bool
-ControllerAxisIsReleased (enum SDLAxis axis)
-{
+ControllerAxisIsReleased (enum SDLAxis axis) {
 	return ControllerAxisIsUp (axis) && ControllerAxisWasDown (axis);
 }
 
 void
-UpdateTouch ()
-{
+UpdateTouch () {
 	if (dwGuiDisplay->active || dwGuiDisplay->on)
 		return;
 
@@ -1385,68 +1267,60 @@ float sliderIncrement = 16.6f / 750.0f;
 float sensorStep = (1.0f / 32);
 
 struct InternalButtonState
-GetInternalButtonState (struct Keybindings bindings)
-{
+GetInternalButtonState (struct Keybindings bindings) {
 	struct InternalButtonState buttons = { 0 };
 
-	for (int i = 0; i < COUNTOFARR (ConfigKeyboardButtons); i++)
-		{
-			if (bindings.keycodes[i] == 0)
-				continue;
-			if (KeyboardIsReleased (bindings.keycodes[i]))
-				buttons.Released = 1;
-			if (KeyboardIsDown (bindings.keycodes[i]))
-				buttons.Down = 1;
-			if (KeyboardIsTapped (bindings.keycodes[i]))
-				buttons.Tapped = 1;
-		}
-	for (int i = 0; i < COUNTOFARR (ConfigControllerButtons); i++)
-		{
-			if (bindings.buttons[i] == SDL_CONTROLLER_BUTTON_INVALID)
-				continue;
-			if (ControllerButtonIsReleased (bindings.buttons[i]))
-				buttons.Released = 1;
-			if (ControllerButtonIsDown (bindings.buttons[i]))
-				buttons.Down = 1;
-			if (ControllerButtonIsTapped (bindings.buttons[i]))
-				buttons.Tapped = 1;
-		}
-	for (int i = 0; i < COUNTOFARR (ConfigControllerAXIS); i++)
-		{
-			if (bindings.axis[i] == 0)
-				continue;
-			if (ControllerAxisIsReleased (bindings.axis[i]))
-				buttons.Released = 1;
-			if (ControllerAxisIsDown (bindings.axis[i]))
-				buttons.Down = 1;
-			if (ControllerAxisIsTapped (bindings.axis[i]))
-				buttons.Tapped = 1;
-		}
+	for (int i = 0; i < COUNTOFARR (ConfigKeyboardButtons); i++) {
+		if (bindings.keycodes[i] == 0)
+			continue;
+		if (KeyboardIsReleased (bindings.keycodes[i]))
+			buttons.Released = 1;
+		if (KeyboardIsDown (bindings.keycodes[i]))
+			buttons.Down = 1;
+		if (KeyboardIsTapped (bindings.keycodes[i]))
+			buttons.Tapped = 1;
+	}
+	for (int i = 0; i < COUNTOFARR (ConfigControllerButtons); i++) {
+		if (bindings.buttons[i] == SDL_CONTROLLER_BUTTON_INVALID)
+			continue;
+		if (ControllerButtonIsReleased (bindings.buttons[i]))
+			buttons.Released = 1;
+		if (ControllerButtonIsDown (bindings.buttons[i]))
+			buttons.Down = 1;
+		if (ControllerButtonIsTapped (bindings.buttons[i]))
+			buttons.Tapped = 1;
+	}
+	for (int i = 0; i < COUNTOFARR (ConfigControllerAXIS); i++) {
+		if (bindings.axis[i] == 0)
+			continue;
+		if (ControllerAxisIsReleased (bindings.axis[i]))
+			buttons.Released = 1;
+		if (ControllerAxisIsDown (bindings.axis[i]))
+			buttons.Down = 1;
+		if (ControllerAxisIsTapped (bindings.axis[i]))
+			buttons.Tapped = 1;
+	}
 
 	return buttons;
 }
 
 bool
-IsButtonTapped (struct Keybindings bindings)
-{
+IsButtonTapped (struct Keybindings bindings) {
 	return GetInternalButtonState (bindings).Tapped;
 }
 
 bool
-IsButtonReleased (struct Keybindings bindings)
-{
+IsButtonReleased (struct Keybindings bindings) {
 	return GetInternalButtonState (bindings).Released;
 }
 
 bool
-IsButtonDown (struct Keybindings bindings)
-{
+IsButtonDown (struct Keybindings bindings) {
 	return GetInternalButtonState (bindings).Down;
 }
 
 void
-SetSensor (int index, int value)
-{
+SetSensor (int index, int value) {
 	if (index < 0 || index >= 32)
 		return;
 
@@ -1455,8 +1329,7 @@ SetSensor (int index, int value)
 }
 
 void
-ApplyContactPoint (struct ContactPoint contactPoint, int section)
-{
+ApplyContactPoint (struct ContactPoint contactPoint, int section) {
 	sliderState->SectionTouched[section] = contactPoint.InContact;
 
 	float position = contactPoint.Position;
@@ -1465,11 +1338,10 @@ ApplyContactPoint (struct ContactPoint contactPoint, int section)
 	else if (position < 0.0f)
 		position = 0.0f;
 
-	if (contactPoint.InContact)
-		{
-			int sensor = (int)(position * (32 - 1));
-			SetSensor (sensor, contactPoint.InContact ? 180 : 0);
-		}
+	if (contactPoint.InContact) {
+		int sensor = (int)(position * (32 - 1));
+		SetSensor (sensor, contactPoint.InContact ? 180 : 0);
+	}
 
 	sliderState->SectionPositions[section]
 		= contactPoint.InContact ? -1.0f + (position * 2.0f) : 0.0f;
@@ -1477,8 +1349,8 @@ ApplyContactPoint (struct ContactPoint contactPoint, int section)
 
 void
 EmulateSliderInput (struct Keybindings left, struct Keybindings right,
-					struct ContactPoint *contactPoint, float start, float end)
-{
+					struct ContactPoint *contactPoint, float start,
+					float end) {
 	bool leftDown = IsButtonDown (left);
 	bool rightDown = IsButtonDown (right);
 
@@ -1502,8 +1374,7 @@ EmulateSliderInput (struct Keybindings left, struct Keybindings right,
 }
 
 enum JvsButtons
-GetButtonsState (bool (*buttonTestFunc) (struct Keybindings))
-{
+GetButtonsState (bool (*buttonTestFunc) (struct Keybindings)) {
 	enum JvsButtons buttons = { 0 };
 
 	if (buttonTestFunc (TEST))
@@ -1532,32 +1403,27 @@ GetButtonsState (bool (*buttonTestFunc) (struct Keybindings))
 }
 
 void
-EndRumble ()
-{
-	for (int i = 0; i < COUNTOFARR (controllers); i++)
-		{
-			if (!controllers[i]
-				|| !SDL_GameControllerHasRumble (controllers[i]))
-				continue;
+EndRumble () {
+	for (int i = 0; i < COUNTOFARR (controllers); i++) {
+		if (!controllers[i] || !SDL_GameControllerHasRumble (controllers[i]))
+			continue;
 
-			SDL_GameControllerRumble (controllers[i], 0, 0, 1000);
-		}
+		SDL_GameControllerRumble (controllers[i], 0, 0, 1000);
+	}
 }
 
 FUNCTION_PTR (void, __stdcall, ChangeGameState, 0x1401953D0,
 			  uint32_t gameState);
 void
-UpdateInput ()
-{
+UpdateInput () {
 	if (IsButtonDown (ADVERTISE))
 		ChangeGameState (1);
 	if (IsButtonDown (GAME))
 		ChangeGameState (2);
-	if (IsButtonDown (DATA_TEST))
-		{
-			ShouldDrawTestMenu = true;
-			ChangeGameState (3);
-		}
+	if (IsButtonDown (DATA_TEST)) {
+		ShouldDrawTestMenu = true;
+		ChangeGameState (3);
+	}
 	if (IsButtonDown (TEST_MODE))
 		ChangeGameState (4);
 	if (IsButtonDown (APP_ERROR))
@@ -1595,52 +1461,42 @@ UpdateInput ()
 		return;
 
 	bool isSliderTouched = false;
-	for (int i = 0; i < 2; i++)
-		{
-			if (ContactPoints[i].InContact)
-				isSliderTouched = true;
-		}
-	if (!isSliderTouched)
-		{
-			EndRumble ();
+	for (int i = 0; i < 2; i++) {
+		if (ContactPoints[i].InContact)
+			isSliderTouched = true;
+	}
+	if (!isSliderTouched) {
+		EndRumble ();
+		return;
+	}
+	for (int i = 0; i < 64; ++i) {
+		if (targetStates[i].tgtRemainingTime < 0.13f
+			&& targetStates[i].tgtRemainingTime > -0.13f
+			&& targetStates[i].tgtRemainingTime != 0
+			&& (targetStates[i].tgtType == 15 || targetStates[i].tgtType == 16)
+			&& targetStates[i].tgtHitState == 21) {
+			for (int i = 0; i < COUNTOFARR (controllers); i++) {
+				if (!controllers[i]
+					|| !SDL_GameControllerHasRumble (controllers[i]))
+					continue;
+
+				SDL_GameControllerRumble (controllers[i], rumbleIntensity * 2,
+										  rumbleIntensity, 1000);
+			}
 			return;
 		}
-	for (int i = 0; i < 64; ++i)
-		{
-			if (targetStates[i].tgtRemainingTime < 0.13f
-				&& targetStates[i].tgtRemainingTime > -0.13f
-				&& targetStates[i].tgtRemainingTime != 0
-				&& (targetStates[i].tgtType == 15
-					|| targetStates[i].tgtType == 16)
-				&& targetStates[i].tgtHitState == 21)
-				{
-					for (int i = 0; i < COUNTOFARR (controllers); i++)
-						{
-							if (!controllers[i]
-								|| !SDL_GameControllerHasRumble (
-									controllers[i]))
-								continue;
-
-							SDL_GameControllerRumble (controllers[i],
-													  rumbleIntensity * 2,
-													  rumbleIntensity, 1000);
-						}
-					return;
-				}
-		}
+	}
 	EndRumble ();
 }
 
-void
-SetInputStateBit (uint8_t *data, uint8_t bit, bool isPressed)
-{
+inline void
+SetInputStateBit (uint8_t *data, uint8_t bit, bool isPressed) {
 	data[bit / 8] = isPressed ? data[bit / 8] | 1 << (bit % 8)
 							  : data[bit / 8] & ~(1 << (bit % 8));
 }
 
 void
-UpdateDwGuiInput ()
-{
+UpdateDwGuiInput () {
 	char keyState = 0;
 
 	char caseDiff = 'A' - 'a';
@@ -1665,21 +1521,19 @@ UpdateDwGuiInput ()
 		= currentMouseState.Position.y - lastMouseState.Position.y;
 	inputState->Key = keyState;
 
-	for (int i = 0; i < COUNTOFARR (keyBits); i++)
-		{
-			SetInputStateBit ((uint8_t *)&inputState->Tapped, keyBits[i].bit,
-							  KeyboardIsTapped (keyBits[i].keycode));
-			SetInputStateBit ((uint8_t *)&inputState->Released, keyBits[i].bit,
-							  KeyboardIsReleased (keyBits[i].keycode));
-			SetInputStateBit ((uint8_t *)&inputState->Down, keyBits[i].bit,
-							  KeyboardIsDown (keyBits[i].keycode));
-			SetInputStateBit ((uint8_t *)&inputState->DoubleTapped,
-							  keyBits[i].bit,
-							  KeyboardIsTapped (keyBits[i].keycode));
-			SetInputStateBit ((uint8_t *)&inputState->IntervalTapped,
-							  keyBits[i].bit,
-							  KeyboardIsTapped (keyBits[i].keycode));
-		}
+	for (int i = 0; i < COUNTOFARR (keyBits); i++) {
+		SetInputStateBit ((uint8_t *)&inputState->Tapped, keyBits[i].bit,
+						  KeyboardIsTapped (keyBits[i].keycode));
+		SetInputStateBit ((uint8_t *)&inputState->Released, keyBits[i].bit,
+						  KeyboardIsReleased (keyBits[i].keycode));
+		SetInputStateBit ((uint8_t *)&inputState->Down, keyBits[i].bit,
+						  KeyboardIsDown (keyBits[i].keycode));
+		SetInputStateBit ((uint8_t *)&inputState->DoubleTapped, keyBits[i].bit,
+						  KeyboardIsTapped (keyBits[i].keycode));
+		SetInputStateBit ((uint8_t *)&inputState->IntervalTapped,
+						  keyBits[i].bit,
+						  KeyboardIsTapped (keyBits[i].keycode));
+	}
 
 	SetInputStateBit ((uint8_t *)&inputState->Tapped, 99, IsMouseScrollUp);
 	SetInputStateBit ((uint8_t *)&inputState->Released, 99, IsMouseScrollUp);
@@ -1698,51 +1552,45 @@ UpdateDwGuiInput ()
 	SetInputStateBit ((uint8_t *)&inputState->IntervalTapped, 100,
 					  IsMouseScrollDown);
 
-	if (dwGuiDisplay->on)
-		{
-			IsMouseScrollUp = false;
-			IsMouseScrollDown = false;
-		}
+	if (dwGuiDisplay->on) {
+		IsMouseScrollUp = false;
+		IsMouseScrollDown = false;
+	}
 }
 
 float verticalRotation;
 float horizontalRotation;
 FUNCTION_PTR (void, __stdcall, GlutSetCursor, 0x1408B68E6, int32_t cursorID);
 void
-UpdateUnlockedCamera (HWND DivaWindowHandle)
-{
-	if (IsButtonTapped (CAMERA_UNLOCK_TOGGLE))
-		{
-			unlockedCamera = !unlockedCamera;
-			GlutSetCursor (unlockedCamera ? 0x65 : 0);
-			if (unlockedCamera)
-				{
-					WRITE_MEMORY (0x1401F9460, uint8_t, 0xC3);
-					WRITE_MEMORY (0x1401F93F0, uint8_t, 0xC3);
-					WRITE_MEMORY (0x1401F9480, uint8_t, 0xC3);
-					WRITE_MEMORY (0x1401F9430, uint8_t, 0xC3);
+UpdateUnlockedCamera (HWND DivaWindowHandle) {
+	if (IsButtonTapped (CAMERA_UNLOCK_TOGGLE)) {
+		unlockedCamera = !unlockedCamera;
+		GlutSetCursor (unlockedCamera ? 0x65 : 0);
+		if (unlockedCamera) {
+			WRITE_MEMORY (0x1401F9460, uint8_t, 0xC3);
+			WRITE_MEMORY (0x1401F93F0, uint8_t, 0xC3);
+			WRITE_MEMORY (0x1401F9480, uint8_t, 0xC3);
+			WRITE_MEMORY (0x1401F9430, uint8_t, 0xC3);
 
-					verticalRotation
-						= (float)(atan2 (camera->FocusZ - camera->PositionZ,
-										 camera->FocusX - camera->PositionX)
-								  * 180.0 / M_PI)
-						  + 90.0f;
-					horizontalRotation = 0.0f;
-					camera->Rotation = 0.0f;
-					camera->HorizontalFov = 70.0f;
+			verticalRotation
+				= (float)(atan2 (camera->FocusZ - camera->PositionZ,
+								 camera->FocusX - camera->PositionX)
+						  * 180.0 / M_PI)
+				  + 90.0f;
+			horizontalRotation = 0.0f;
+			camera->Rotation = 0.0f;
+			camera->HorizontalFov = 70.0f;
 
-					RECT window;
-					GetClientRect (DivaWindowHandle, &window);
-					SetCursorPos (window.right / 2, window.bottom / 2);
-				}
-			else
-				{
-					WRITE_MEMORY (0x1401F9460, uint8_t, 0x8B);
-					WRITE_MEMORY (0x1401F93F0, uint8_t, 0x8B);
-					WRITE_MEMORY (0x1401F9480, uint8_t, 0xF3);
-					WRITE_MEMORY (0x1401F9430, uint8_t, 0x80);
-				}
+			RECT window;
+			GetClientRect (DivaWindowHandle, &window);
+			SetCursorPos (window.right / 2, window.bottom / 2);
+		} else {
+			WRITE_MEMORY (0x1401F9460, uint8_t, 0x8B);
+			WRITE_MEMORY (0x1401F93F0, uint8_t, 0x8B);
+			WRITE_MEMORY (0x1401F9480, uint8_t, 0xF3);
+			WRITE_MEMORY (0x1401F9430, uint8_t, 0x80);
 		}
+	}
 
 	if (!unlockedCamera)
 		return;
@@ -1757,63 +1605,59 @@ UpdateUnlockedCamera (HWND DivaWindowHandle)
 	bool cw = IsButtonDown (CAMERA_ROTATE_CW);
 	bool zoomIn = IsButtonDown (CAMERA_ZOOM_IN);
 
-	if (forward ^ IsButtonDown (CAMERA_MOVE_BACKWARD))
-		{
-			camera->PositionX += -1
-								 * cos (((horizontalRotation
-										  - (forward ? 0.0f : 180.0f) + 90.0f)
-										 * M_PI)
-										/ 180.0f)
-								 * speed;
-			camera->PositionZ += -1
-								 * sin (((horizontalRotation
-										  - (forward ? 0.0f : 180.0f) + 90.0f)
-										 * M_PI)
-										/ 180.0f)
-								 * speed;
-		}
-	if (left ^ IsButtonDown (CAMERA_MOVE_RIGHT))
-		{
-			camera->PositionX += -1
-								 * cos (((horizontalRotation
-										  + (left ? -90.0f : 90.0f) + 90.0f)
-										 * M_PI)
-										/ 180.0f)
-								 * speed;
-			camera->PositionZ += -1
-								 * sin (((horizontalRotation
-										  + (left ? -90.0f : 90.0f) + 90.0f)
-										 * M_PI)
-										/ 180.0f)
-								 * speed;
-		}
+	if (forward ^ IsButtonDown (CAMERA_MOVE_BACKWARD)) {
+		camera->PositionX
+			+= -1
+			   * cos (((horizontalRotation - (forward ? 0.0f : 180.0f) + 90.0f)
+					   * M_PI)
+					  / 180.0f)
+			   * speed;
+		camera->PositionZ
+			+= -1
+			   * sin (((horizontalRotation - (forward ? 0.0f : 180.0f) + 90.0f)
+					   * M_PI)
+					  / 180.0f)
+			   * speed;
+	}
+	if (left ^ IsButtonDown (CAMERA_MOVE_RIGHT)) {
+		camera->PositionX
+			+= -1
+			   * cos (((horizontalRotation + (left ? -90.0f : 90.0f) + 90.0f)
+					   * M_PI)
+					  / 180.0f)
+			   * speed;
+		camera->PositionZ
+			+= -1
+			   * sin (((horizontalRotation + (left ? -90.0f : 90.0f) + 90.0f)
+					   * M_PI)
+					  / 180.0f)
+			   * speed;
+	}
 	if (up ^ IsButtonDown (CAMERA_MOVE_DOWN))
 		camera->PositionY += speed * (up ? 0.5f : -0.5f);
 	if (cw ^ IsButtonDown (CAMERA_ROTATE_CCW))
 		camera->Rotation += speed * (cw ? -10.0f : 10.0f);
-	if (zoomIn ^ IsButtonDown (CAMERA_ZOOM_OUT))
-		{
-			camera->HorizontalFov += speed * (zoomIn ? -5.0f : 5.0f);
-			if (camera->HorizontalFov < 1.0f)
-				camera->HorizontalFov = 1.0f;
-			if (camera->HorizontalFov > 170.0f)
-				camera->HorizontalFov = 170.0f;
-		}
+	if (zoomIn ^ IsButtonDown (CAMERA_ZOOM_OUT)) {
+		camera->HorizontalFov += speed * (zoomIn ? -5.0f : 5.0f);
+		if (camera->HorizontalFov < 1.0f)
+			camera->HorizontalFov = 1.0f;
+		if (camera->HorizontalFov > 170.0f)
+			camera->HorizontalFov = 170.0f;
+	}
 
 	int mouseDeltaX = currentMouseState.Position.x - lastMouseState.Position.x;
 	int mouseDeltaY = currentMouseState.Position.y - lastMouseState.Position.y;
 
-	if (mouseDeltaX != 0 || mouseDeltaY != 0)
-		{
-			RECT window;
-			GetClientRect (DivaWindowHandle, &window);
-			SetCursorPos (window.right / 2, window.bottom / 2);
-			currentMouseState.Position.x = window.right / 2;
-			currentMouseState.Position.y = window.bottom / 2;
+	if (mouseDeltaX != 0 || mouseDeltaY != 0) {
+		RECT window;
+		GetClientRect (DivaWindowHandle, &window);
+		SetCursorPos (window.right / 2, window.bottom / 2);
+		currentMouseState.Position.x = window.right / 2;
+		currentMouseState.Position.y = window.bottom / 2;
 
-			horizontalRotation += mouseDeltaX * 0.25f;
-			verticalRotation -= mouseDeltaY * 0.05f;
-		}
+		horizontalRotation += mouseDeltaX * 0.25f;
+		verticalRotation -= mouseDeltaY * 0.05f;
+	}
 
 	struct Keybindings RSTICK_UP = { .axis = { SDL_AXIS_RIGHT_UP } };
 	struct Keybindings RSTICK_DOWN = { .axis = { SDL_AXIS_RIGHT_DOWN } };
