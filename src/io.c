@@ -784,6 +784,29 @@ DrawPauseMenu ()
 
 	if (firstPauseFrame)
 		{
+			/* Clear state */
+			currentTouchPanelState->XPosition = 0.0f;
+			currentTouchPanelState->YPosition = 0.0f;
+			currentTouchPanelState->ContactType = 0;
+			currentTouchPanelState->Pressure = 0.0f;
+			inputState->Released.Buttons = 0;
+			inputState->Down.Buttons = 0;
+
+			inputState->MouseX = 0;
+			inputState->MouseY = 0;
+			inputState->MouseDeltaX = 0;
+			inputState->MouseDeltaY = 0;
+
+			for (int i = 0; i < 32; i++)
+				SetSensor (i, 0);
+			for (int i = 0; i < 2; i++)
+				{
+					sliderState->SectionTouched[i] = false;
+					sliderState->SectionPositions[i] = 0.0f;
+				}
+
+			EndRumble ();
+
 			firstPauseFrame = false;
 			PauseDSC ();
 			memcpy (&aetMoveOriginal, (void *)0x1401703B3, 8);

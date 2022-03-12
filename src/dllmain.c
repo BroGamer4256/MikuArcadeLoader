@@ -114,8 +114,11 @@ HOOK (int64_t, __fastcall, EngineUpdate, 0x140194CD0, int64_t a1)
 
 HOOK (void, __cdecl, Update2D, 0x0140501F70, void *a1)
 {
-	fspeed_error = fspeed_error_next;
-	fspeed_error_next = 0;
+	if (fps > 0)
+		{
+			fspeed_error = fspeed_error_next;
+			fspeed_error_next = 0;
+		}
 	Update2DIO ();
 	originalUpdate2D (a1);
 }
@@ -335,10 +338,10 @@ DllMain (HMODULE mod, DWORD cause, void *ctx)
 	if (fps > 0)
 		{
 			expectedFrameDuration = 1000 / fps;
-			INSTALL_HOOK (Update2D);
 			INSTALL_HOOK (GetFrameSpeed);
 		}
 	INSTALL_HOOK (EngineUpdate);
+	INSTALL_HOOK (Update2D);
 
 	toml_table_t *internalResSection
 		= openConfigSection (config, "internalRes");
