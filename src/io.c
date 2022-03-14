@@ -2,8 +2,13 @@
 #include "io.h"
 #include "helpers.h"
 #include <SDL.h>
+#include <SDL_config.h>
 #include <math.h>
 #include <stdio.h>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 bool IsMouseScrollUp = false;
 bool IsMouseScrollDown = false;
@@ -530,6 +535,12 @@ InitializeIO (HWND DivaWindowHandle) {
 	toml_free (config);
 
 	SDL_SetMainReady ();
+
+	SDL_SetHint (SDL_HINT_JOYSTICK_HIDAPI_PS4, "1");
+	SDL_SetHint (SDL_HINT_JOYSTICK_HIDAPI_PS4_RUMBLE, "1");
+	SDL_SetHint (SDL_HINT_JOYSTICK_HIDAPI_PS5, "1");
+	SDL_SetHint (SDL_HINT_JOYSTICK_HIDAPI_PS5_RUMBLE, "1");
+
 	if (SDL_Init (SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMECONTROLLER
 				  | SDL_INIT_EVENTS | SDL_INIT_VIDEO)
 		!= 0)
@@ -1304,17 +1315,17 @@ GetInternalButtonState (struct Keybindings bindings) {
 	return buttons;
 }
 
-bool
+inline bool
 IsButtonTapped (struct Keybindings bindings) {
 	return GetInternalButtonState (bindings).Tapped;
 }
 
-bool
+inline bool
 IsButtonReleased (struct Keybindings bindings) {
 	return GetInternalButtonState (bindings).Released;
 }
 
-bool
+inline bool
 IsButtonDown (struct Keybindings bindings) {
 	return GetInternalButtonState (bindings).Down;
 }
@@ -1408,7 +1419,7 @@ EndRumble () {
 		if (!controllers[i] || !SDL_GameControllerHasRumble (controllers[i]))
 			continue;
 
-		SDL_GameControllerRumble (controllers[i], 0, 0, 1000);
+		SDL_GameControllerRumble (controllers[i], 0, 0, 0);
 	}
 }
 

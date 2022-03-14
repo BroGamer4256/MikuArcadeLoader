@@ -156,8 +156,8 @@ UpdateFastLoader () {
 	for (int i = 0; i < 3; i++)
 		UpdateTask ();
 
-	*(int *)0x140EDA7A8 = 3;
-	*(int *)0x1411A1498 = 3939;
+	*(int32_t *)0x140EDA7A8 = 3;
+	*(int32_t *)0x1411A1498 = 3939;
 }
 
 void
@@ -170,15 +170,15 @@ UpdateScale (HWND DivaWindowHandle) {
 	*(float *)0x14CC621E4 = hWindow.right;
 	*(float *)0x14CC621E8 = hWindow.bottom;
 	*(double *)0x140FBC2E8 = (double)hWindow.right / (double)hWindow.bottom;
-	*(int *)0x1411AD5F8 = hWindow.right;
-	*(int *)0x1411AD5FC = hWindow.bottom;
+	*(int32_t *)0x1411AD5F8 = hWindow.right;
+	*(int32_t *)0x1411AD5FC = hWindow.bottom;
 
-	*(int *)0x1411AD608 = 0;
-	*(int *)0x140EDA8E4 = *(int *)0x140EDA8BC;
-	*(int *)0x140EDA8E8 = *(int *)0x140EDA8C0;
+	*(int32_t *)0x1411AD608 = 0;
+	*(int32_t *)0x140EDA8E4 = *(int32_t *)0x140EDA8BC;
+	*(int32_t *)0x140EDA8E8 = *(int32_t *)0x140EDA8C0;
 	*(float *)0x1411A1900 = 0;
-	*(float *)0x1411A1904 = *(int *)0x140EDA8BC;
-	*(float *)0x1411A1908 = *(int *)0x140EDA8C0;
+	*(float *)0x1411A1904 = *(int32_t *)0x140EDA8BC;
+	*(float *)0x1411A1908 = *(int32_t *)0x140EDA8C0;
 }
 
 void
@@ -376,7 +376,7 @@ DllMain (HMODULE mod, DWORD cause, void *ctx) {
 			if (!patch)
 				break;
 			void *address = (void *)readConfigInt (patch, "address", 0);
-			if (address < (void *)140000000)
+			if (address < (void *)0x140000000)
 				continue;
 			toml_datum_t data_type = toml_string_in (patch, "data_type");
 			if (!data_type.ok)
