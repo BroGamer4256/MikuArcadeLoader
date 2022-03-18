@@ -20,8 +20,6 @@ options:
 	@echo "LDFLAGS	= ${LDFLAGS}"
 	@echo "CC	= ${CC}"
 
-	cd out && zip ../dist.zip * plugins/* plugins/patches/* plugins/Novidia\ Shaders/*
-	rm -rf PDL SDL_GameControllerDB dinput8 out
 
 ${TARGET}/%.o: %.c
 	@echo BUILD $@
