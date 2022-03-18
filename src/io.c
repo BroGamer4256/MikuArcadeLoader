@@ -458,6 +458,27 @@ struct Keybindings CAMERA_MOVE_FAST
 struct Keybindings CAMERA_MOVE_SLOW
 	= { .keycodes = { VK_TAB }, .buttons = { SDL_CONTROLLER_BUTTON_Y } };
 
+struct Keybindings WIREFRAME = { .keycodes = { VK_F12 } };
+
+struct Keybindings PAUSE_ENABLE
+	= { .keycodes = { VK_RETURN },
+		.buttons = { SDL_CONTROLLER_BUTTON_START } };
+struct Keybindings PAUSE_UP = { .keycodes = { VK_UP },
+								.buttons = { SDL_CONTROLLER_BUTTON_DPAD_UP },
+								.axis = { SDL_AXIS_LEFT_UP } };
+struct Keybindings PAUSE_DOWN
+	= { .keycodes = { VK_DOWN },
+		.buttons = { SDL_CONTROLLER_BUTTON_DPAD_DOWN },
+		.axis = { SDL_AXIS_LEFT_DOWN } };
+struct Keybindings PAUSE_SELECT
+	= { .keycodes = { VK_RETURN, 'D', 'L' },
+		.buttons = { SDL_CONTROLLER_BUTTON_START, SDL_CONTROLLER_BUTTON_B,
+					 SDL_CONTROLLER_BUTTON_DPAD_RIGHT } };
+struct Keybindings PAUSE_HIDE
+	= { .keycodes = { 'A', 'J' },
+		.buttons
+		= { SDL_CONTROLLER_BUTTON_X, SDL_CONTROLLER_BUTTON_DPAD_LEFT } };
+
 struct KeyBit keyBits[20] = {
 	{ 5, VK_LEFT },		{ 6, VK_RIGHT },
 
@@ -522,6 +543,14 @@ InitializeIO (HWND DivaWindowHandle) {
 	SetConfigValue (config, "CAMERA_ZOOM_OUT", &CAMERA_ZOOM_OUT);
 	SetConfigValue (config, "CAMERA_MOVE_FAST", &CAMERA_MOVE_FAST);
 	SetConfigValue (config, "CAMERA_MOVE_SLOW", &CAMERA_MOVE_SLOW);
+
+	SetConfigValue (config, "WIREFRAME", &WIREFRAME);
+
+	SetConfigValue (config, "PAUSE_ENABLE", &PAUSE_ENABLE);
+	SetConfigValue (config, "PAUSE_UP", &PAUSE_UP);
+	SetConfigValue (config, "PAUSE_DOWN", &PAUSE_DOWN);
+	SetConfigValue (config, "PAUSE_SELECT", &PAUSE_SELECT);
+	SetConfigValue (config, "PAUSE_HIDE", &PAUSE_HIDE);
 
 	toml_free (config);
 
@@ -625,6 +654,21 @@ UpdateIO (HWND DivaWindowHandle) {
 		if (dwGuiDisplay->on)
 			return;
 
+		/* Wireframe */
+		if (IsButtonTapped (WIREFRAME)) {
+			if (*(uint8_t *)0x140500BE6 == 0xB9) {
+				WRITE_MEMORY (0x140500BE6, uint8_t, 0xBA, 0x01, 0x1B, 0x00,
+							  0x00, 0xB9, 0x08, 0x04, 0x00, 0x00, 0xE8, 0xE1,
+							  0x5A, 0x3B, 0x00, 0x90, 0x90, 0x90, 0x90, 0x90,
+							  0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90);
+			} else {
+				WRITE_MEMORY (0x140500BE6, uint8_t, 0xB9, 0x1C, 0x00, 0x00,
+							  0x00, 0xE8, 0x30, 0x7C, 0xF3, 0xFF, 0xB9, 0x1B,
+							  0x00, 0x00, 0x00, 0x8B, 0xD8, 0xE8, 0x24, 0x7C,
+							  0xF3, 0xFF, 0xB9, 0x1A, 0x00, 0x00, 0x00);
+			}
+		}
+
 		/* Scrolling through menus */
 		int *slotsToScroll = (int *)0x14CC12470;
 		int *modulesToScroll = (int *)0x1418047EC;
@@ -707,12 +751,13 @@ DrawMenu (int index, const char **items, int items_len) {
 
 void
 Update2DIO () {
-	DrawPauseMenu ();
 	DrawTestMenu ();
+	DrawPauseMenu ();
 }
 
 const char *PauseMenuItems[] = { "RESUME", "RESTART", "GIVE UP" };
 bool firstPauseFrame = true;
+bool hidePauseMenu = false;
 int pauseIndex = 0;
 FUNCTION_PTR (void, __stdcall, PauseDSC, 0x1401295C0);
 FUNCTION_PTR (void, __stdcall, UnPauseDSC, 0x140129590);
@@ -725,19 +770,14 @@ void
 DrawPauseMenu () {
 	if (*(uint32_t *)0x140EDA82C != 13)
 		isPaused = false;
-	if (!isPaused)
+	if (IsButtonTapped (PAUSE_HIDE) && !firstPauseFrame)
+		hidePauseMenu = !hidePauseMenu;
+	if (!isPaused || hidePauseMenu)
 		return;
 
-	struct Keybindings UP = { .keycodes = { VK_UP },
-							  .buttons = { SDL_CONTROLLER_BUTTON_DPAD_UP },
-							  .axis = { SDL_AXIS_LEFT_UP } };
-	struct Keybindings DOWN = { .keycodes = { VK_DOWN },
-								.buttons = { SDL_CONTROLLER_BUTTON_DPAD_DOWN },
-								.axis = { SDL_AXIS_LEFT_DOWN } };
-
-	if (IsButtonTapped (UP))
+	if (IsButtonTapped (PAUSE_UP))
 		pauseIndex--;
-	if (IsButtonTapped (DOWN))
+	if (IsButtonTapped (PAUSE_DOWN))
 		pauseIndex++;
 
 	if (pauseIndex > 2)
@@ -786,7 +826,7 @@ DrawPauseMenu () {
 			playstates[i] = *state;
 			*state = 0;
 		}
-	} else if (IsButtonTapped (START) || IsButtonTapped (CIRCLE)) {
+	} else if (IsButtonTapped (PAUSE_SELECT)) {
 		firstPauseFrame = true;
 		isPaused = false;
 		if (pauseIndex == 2)
@@ -851,16 +891,9 @@ DrawTestMenu () {
 	if (!ShouldDrawTestMenu)
 		return;
 
-	struct Keybindings UP = { .keycodes = { VK_UP },
-							  .buttons = { SDL_CONTROLLER_BUTTON_DPAD_UP },
-							  .axis = { SDL_AXIS_LEFT_UP } };
-	struct Keybindings DOWN = { .keycodes = { VK_DOWN },
-								.buttons = { SDL_CONTROLLER_BUTTON_DPAD_DOWN },
-								.axis = { SDL_AXIS_LEFT_DOWN } };
-
-	if (IsButtonTapped (UP))
+	if (IsButtonTapped (PAUSE_UP))
 		dataTestIndex--;
-	if (IsButtonTapped (DOWN))
+	if (IsButtonTapped (PAUSE_DOWN))
 		dataTestIndex++;
 
 	if (dataTestIndex > 39)
@@ -868,7 +901,7 @@ DrawTestMenu () {
 	if (dataTestIndex < 20)
 		dataTestIndex = 39;
 
-	if (IsButtonTapped (START)) {
+	if (IsButtonTapped (PAUSE_SELECT)) {
 		ShouldDrawTestMenu = false;
 		ChangeSubState (3, dataTestIndex - 1);
 	}
@@ -1441,7 +1474,7 @@ UpdateInput () {
 		ChangeGameState (5);
 
 	if (*(uint32_t *)0x140EDA82C == 13)
-		isPaused = IsButtonTapped (START);
+		isPaused = IsButtonTapped (PAUSE_ENABLE);
 
 	if (dwGuiDisplay->active)
 		return;
