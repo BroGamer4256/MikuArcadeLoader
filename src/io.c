@@ -707,8 +707,8 @@ DrawMenu (int index, const char **items, int items_len) {
 
 void
 Update2DIO () {
-	DrawTestMenu ();
 	DrawPauseMenu ();
+	DrawTestMenu ();
 }
 
 const char *PauseMenuItems[] = { "RESUME", "RESTART", "GIVE UP" };
