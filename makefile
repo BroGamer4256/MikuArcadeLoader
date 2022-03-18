@@ -36,10 +36,10 @@ ${OUT}: ${DEPS} ${OBJ}
 .PHONY: clean
 clean:
 	rm -rf ${TARGET}
-	#rm -rf SDL/${SDL_TARGET}
+	rm -rf SDL/${SDL_TARGET}
 
 .PHONY: SDL
 SDL:
 	@mkdir -p SDL/${SDL_TARGET}
-	@#cd SDL/${SDL_TARGET} && ../configure --build=x86_64-linux-gnu --host=${SDL_TARGET} --disable-sdl2-config --disable-shared --enable-assertions=release --enable-directx --enable-haptic 
+	@cd SDL/${SDL_TARGET} && ../configure --build=x86_64-linux-gnu --host=${SDL_TARGET} --disable-sdl2-config --disable-shared --enable-assertions=release --enable-directx --enable-haptic 
 	@make -s -C SDL/${SDL_TARGET}
