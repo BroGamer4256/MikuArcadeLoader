@@ -741,6 +741,7 @@ DrawMenu (int index, const char **items, int items_len) {
 	rect.height = 720;
 	FillRectangle (&drawParam, &rect);
 	drawParam.layer = 0x19;
+	drawParam.colour = 0xFFFFFFF;
 	for (int i = 0; i < items_len; i++) {
 		char buf[32];
 		sprintf (buf, "%s\n", items[i]);
