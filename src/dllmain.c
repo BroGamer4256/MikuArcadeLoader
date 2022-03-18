@@ -1,7 +1,76 @@
 #include "helpers.h"
 #include "io.h"
+#include "poll.h"
 #include <math.h>
 #include <windows.h>
+
+struct RawFont {
+	uint32_t sprId;
+	uint8_t width1;
+	uint8_t height1;
+	uint8_t width2;
+	uint8_t height2;
+	uint8_t layoutParam2Num;
+	uint8_t layoutParam2Div;
+	uint8_t padding0a[0x02];
+	int32_t fontmapId;
+	float layoutParam2NumOverDiv;
+	uint8_t padding14[0x04];
+	uint64_t texWidthChars;
+	int64_t dataBegin;
+	int64_t dataEnd;
+	int64_t dataCapacityEnd;
+	uint8_t layoutParam1;
+	uint8_t padding39[0x7];
+};
+
+struct FontInfo {
+	uint32_t fontId;
+	uint8_t padding04[0x4];
+	struct RawFont *rawfont;
+	uint16_t flag10;
+	uint8_t padding12[0x02];
+	float width1;
+	float height1;
+	float width2;
+	float height2;
+	float userSizeWidth;
+	float userSizeHeight;
+	float userSizeWidthMultiplier;
+	float userSizeHeightMultiplier;
+	float spacingWidth;
+	float spacingHeight;
+};
+
+struct DrawParams {
+	uint32_t colour;
+	uint32_t fillColour;
+	uint8_t clip;
+	uint8_t unk09[0x3];
+	float clipRectX;
+	float clipRectY;
+	float clipRectWidth;
+	float clipRectHeight;
+	uint32_t layer;
+	uint32_t unk20;
+	uint32_t unk24;
+	uint32_t unk28;
+	float textCurrentLocX;
+	float textCurrentLocY;
+	float lineOriginLocX;
+	float lineOriginLocY;
+	uint8_t padding3c[0x4];
+	uint64_t lineLength;
+	struct FontInfo *font;
+	uint16_t unk50;
+};
+
+struct Rectangle {
+	float x;
+	float y;
+	float width;
+	float height;
+};
 
 void UpdateFastLoader ();
 void UpdateScale (HWND DivaWindowHandle);
@@ -15,6 +84,28 @@ float fspeed_error = 0.0;
 float fspeed_error_next = 0.0;
 float fspeed_last_result = 0;
 
+bool isPaused = false;
+bool giveUp = false;
+
+struct Keybindings PAUSE_ENABLE
+	= { .keycodes = { VK_RETURN },
+		.buttons = { SDL_CONTROLLER_BUTTON_START } };
+struct Keybindings PAUSE_UP = { .keycodes = { VK_UP },
+								.buttons = { SDL_CONTROLLER_BUTTON_DPAD_UP },
+								.axis = { SDL_AXIS_LEFT_UP } };
+struct Keybindings PAUSE_DOWN
+	= { .keycodes = { VK_DOWN },
+		.buttons = { SDL_CONTROLLER_BUTTON_DPAD_DOWN },
+		.axis = { SDL_AXIS_LEFT_DOWN } };
+struct Keybindings PAUSE_SELECT
+	= { .keycodes = { VK_RETURN, 'D', 'L' },
+		.buttons = { SDL_CONTROLLER_BUTTON_START, SDL_CONTROLLER_BUTTON_B,
+					 SDL_CONTROLLER_BUTTON_DPAD_RIGHT } };
+struct Keybindings PAUSE_HIDE
+	= { .keycodes = { 'A', 'J' },
+		.buttons
+		= { SDL_CONTROLLER_BUTTON_X, SDL_CONTROLLER_BUTTON_DPAD_LEFT } };
+
 void
 Initialize () {
 	FirstUpdate = false;
@@ -24,6 +115,7 @@ Initialize () {
 		DivaWindowHandle = FindWindow (0, "GLUT");
 
 	InitializeIO (DivaWindowHandle);
+	InitializePoll (DivaWindowHandle);
 
 	/* Enable use_card */
 	WRITE_MEMORY (0x1411A8850, uint8_t, 0x01);
@@ -74,7 +166,17 @@ HOOK (void, __cdecl, Update, 0x14018CC40) {
 	if (FirstUpdate)
 		Initialize ();
 
-	UpdateIO (DivaWindowHandle);
+	UpdatePoll (DivaWindowHandle);
+
+	/* Exit */
+	if (KeyboardIsDown (VK_ESCAPE))
+		*(bool *)0x140EDA6B0 = true;
+
+	if (*(uint32_t *)0x140EDA82C == 13 && !isPaused)
+		isPaused = IsButtonTapped (PAUSE_ENABLE);
+
+	if (!isPaused)
+		UpdateIO (DivaWindowHandle);
 	UpdateScale (DivaWindowHandle);
 	UpdateFastLoader ();
 
@@ -109,12 +211,189 @@ HOOK (int64_t, __fastcall, EngineUpdate, 0x140194CD0, int64_t a1) {
 	return originalEngineUpdate (a1);
 }
 
+FUNCTION_PTR (void, __stdcall, DivaDrawText, 0x140198500,
+			  struct DrawParams *drawParam, uint32_t flags, const char *text,
+			  int64_t len);
+FUNCTION_PTR (struct FontInfo *, __thiscall, GetFontInfoFromID, 0x140196510,
+			  struct FontInfo *fontInfo, uint32_t id);
+FUNCTION_PTR (void, __stdcall, FillRectangle, 0x140198D80,
+			  struct DrawParams *drawParam, const struct Rectangle *rect);
+
+void
+DrawMenu (int index, const char **items, int items_len) {
+	struct FontInfo fontInfo;
+	fontInfo = *GetFontInfoFromID (&fontInfo, 0x11);
+
+	struct DrawParams drawParam = { 0 };
+	drawParam.colour = 0xFF000000;
+	drawParam.fillColour = 0xFF000000;
+	drawParam.layer = 0x18;
+	drawParam.unk24 = 0xD;
+	drawParam.textCurrentLocX = (1280 / 2) - 100;
+	drawParam.textCurrentLocY = (720 / 2) - (items_len / 2 * 24);
+	drawParam.font = &fontInfo;
+	drawParam.unk50 = 0x25A1;
+
+	struct Rectangle rect = { 0 };
+	rect.width = 1280;
+	rect.height = 720;
+	FillRectangle (&drawParam, &rect);
+	drawParam.layer = 0x19;
+	drawParam.colour = 0xFFFFFFF;
+	for (int i = 0; i < items_len; i++) {
+		char buf[32];
+		sprintf (buf, "%s\n", items[i]);
+		drawParam.colour = (i == index ? 0xFF00FFFF : 0xFFFFFFFF);
+		DivaDrawText (&drawParam, 0x1005, buf, 32);
+	}
+}
+
+HOOK (bool, __stdcall, GiveUp, 0x14010EF00, void *cls) {
+	if (giveUp) {
+		giveUp = false;
+		return true;
+	}
+	return originalGiveUp (cls);
+}
+
+const char *PauseMenuItems[] = { "RESUME", "RESTART", "GIVE UP" };
+bool firstPauseFrame = true;
+bool hidePauseMenu = false;
+int pauseIndex = 0;
+uint8_t aetMoveOriginal[8];
+uint8_t framespeedOriginal[4];
+uint8_t ageageHairOriginal[3];
+bool playstates[8];
+
+FUNCTION_PTR (void, __stdcall, PauseDSC, 0x1401295C0);
+FUNCTION_PTR (void, __stdcall, UnPauseDSC, 0x140129590);
+FUNCTION_PTR (void, __stdcall, LoadPV, 0x1400FDDC0, uint64_t cls);
+
+void
+DrawPauseMenu () {
+	if (*(uint32_t *)0x140EDA82C != 13)
+		isPaused = false;
+	if (IsButtonTapped (PAUSE_HIDE) && !firstPauseFrame)
+		hidePauseMenu = !hidePauseMenu;
+	if (!isPaused || hidePauseMenu)
+		return;
+
+	if (IsButtonTapped (PAUSE_UP))
+		pauseIndex--;
+	if (IsButtonTapped (PAUSE_DOWN))
+		pauseIndex++;
+
+	if (pauseIndex > 2)
+		pauseIndex = 0;
+	if (pauseIndex < 0)
+		pauseIndex = 2;
+
+	if (firstPauseFrame) {
+		firstPauseFrame = false;
+		PauseDSC ();
+		memcpy (&aetMoveOriginal, (void *)0x1401703B3, 8);
+		memcpy (&framespeedOriginal, (void *)0x140192D50, 4);
+		memcpy (&ageageHairOriginal, (void *)0x14054352C, 3);
+		WRITE_NOP (0x1401703B3, 8);
+		WRITE_MEMORY (0x140192D50, uint8_t, 0x0F, 0x57, 0xC0, 0xC3);
+		WRITE_MEMORY (0x14054352C, uint8_t, 0x0F, 0x57, 0xDB);
+
+		uint64_t audioMixer = *(uint64_t *)0x14CC61190;
+		uint64_t audioStreams = *(uint64_t *)(audioMixer + 0x18);
+		int32_t audioStreamsLen = *(uint64_t *)(audioMixer + 0x20);
+
+		for (int i = 0; i < audioStreamsLen; i++) {
+			uint32_t *state = (uint32_t *)(audioStreams + i * 0x50 + 0x18);
+			playstates[i] = *state;
+			*state = 0;
+		}
+	} else if (IsButtonTapped (PAUSE_SELECT)) {
+		firstPauseFrame = true;
+		isPaused = false;
+		if (pauseIndex == 2)
+			giveUp = true;
+
+		UnPauseDSC ();
+		for (int i = 0; i < 8; i++)
+			WRITE_MEMORY (0x1401703B3 + i, uint8_t, aetMoveOriginal[i]);
+		for (int i = 0; i < 4; i++)
+			WRITE_MEMORY (0x140192D50 + i, uint8_t, framespeedOriginal[i]);
+		for (int i = 0; i < 3; i++)
+			WRITE_MEMORY (0x14054352C + i, uint8_t, ageageHairOriginal[i]);
+
+		uint64_t audioMixer = *(uint64_t *)0x14CC61190;
+		uint64_t audioStreams = *(uint64_t *)(audioMixer + 0x18);
+		int32_t audioStreamsLen = *(uint64_t *)(audioMixer + 0x20);
+
+		for (int i = 0; i < audioStreamsLen; i++) {
+			uint32_t *state = (uint32_t *)(audioStreams + i * 0x50 + 0x18);
+			*state = playstates[i];
+		}
+
+		if (pauseIndex != 1)
+			return;
+
+		WRITE_MEMORY (0x1401038CD, uint8_t, 0x15);
+		WRITE_MEMORY (0x140103B94, uint8_t, 0x18);
+		*(uint8_t *)0x140D0B512 = 0;
+		*(uint8_t *)0x140D0B524 = 8;
+		*(int32_t *)0x140CDD8D8 = 0x11;
+		while (*(int32_t *)0x140CDD8D8 < 0x18)
+			LoadPV (0x140CDD8D0);
+		*(int32_t *)0x140D0A9BC = 0;
+		*(int32_t *)0x140D0A9B8 = 0;
+		*(int32_t *)0x140D0A9C0 = 0;
+		*(uint8_t *)0x140D0A50C = 0;
+		*(int32_t *)0x140D0AA0F = 0;
+		WRITE_MEMORY (0x1401038CD, uint8_t, 0x12);
+		WRITE_MEMORY (0x140103B94, uint8_t, 0x16);
+
+		return;
+	}
+
+	DrawMenu (pauseIndex, PauseMenuItems, 3);
+}
+
+const char *DataTestNames[] = {
+	"MAIN TEST",	 "MISC TEST",	   "OBJECT TEST",	"STAGE TEST",
+	"MOTION TEST",	 "COLLISION TEST", "SPRITE TEST",	"2DAUTH TEST",
+	"3DAUTH TEST",	 "CHARA TEST",	   "ITEM TEST",		"PERFORMANCE TEST",
+	"PVSCRIPT TEST", "PRINT TEST",	   "CARD TEST",		"OPD TEST",
+	"SLIDER TEST",	 "GLITTER TEST",   "GRAPHICS TEST", "COLLECTION CARD TEST",
+};
+int dataTestIndex = 20;
+FUNCTION_PTR (void, __stdcall, ChangeSubState, 0x140195260, uint32_t gameState,
+			  uint32_t subState);
+
+void
+DrawTestMenu () {
+	if (*(uint32_t *)0x140EDA810 != 3 || *(uint32_t *)0x140EDA82C != 19)
+		return;
+
+	if (IsButtonTapped (PAUSE_UP))
+		dataTestIndex--;
+	if (IsButtonTapped (PAUSE_DOWN))
+		dataTestIndex++;
+
+	if (dataTestIndex > 39)
+		dataTestIndex = 20;
+	if (dataTestIndex < 20)
+		dataTestIndex = 39;
+
+	if (IsButtonTapped (PAUSE_SELECT)) {
+		ChangeSubState (3, dataTestIndex - 1);
+	}
+
+	DrawMenu (dataTestIndex - 20, DataTestNames, 20);
+}
+
 HOOK (void, __cdecl, Update2D, 0x0140501F70, void *a1) {
 	if (fps > 0) {
 		fspeed_error = fspeed_error_next;
 		fspeed_error_next = 0;
 	}
-	Update2DIO ();
+	DrawTestMenu ();
+	DrawPauseMenu ();
 	originalUpdate2D (a1);
 }
 
@@ -308,14 +587,26 @@ ApplyPatches () {
 BOOL WINAPI
 DllMain (HMODULE mod, DWORD cause, void *ctx) {
 	if (cause == DLL_PROCESS_DETACH)
-		DiposeIO ();
+		DisposePoll ();
 	if (cause != DLL_PROCESS_ATTACH)
 		return 1;
 
 	ApplyPatches ();
 	INSTALL_HOOK (Update);
 
-	toml_table_t *config = openConfig (configPath ("config.toml"));
+	toml_table_t *config = openConfig (configPath ("keyconfig.toml"));
+	if (!config)
+		return 1;
+
+	SetConfigValue (config, "PAUSE_ENABLE", &PAUSE_ENABLE);
+	SetConfigValue (config, "PAUSE_UP", &PAUSE_UP);
+	SetConfigValue (config, "PAUSE_DOWN", &PAUSE_DOWN);
+	SetConfigValue (config, "PAUSE_SELECT", &PAUSE_SELECT);
+	SetConfigValue (config, "PAUSE_HIDE", &PAUSE_HIDE);
+
+	toml_free (config);
+
+	config = openConfig (configPath ("config.toml"));
 	if (!config)
 		return 1;
 	fps = readConfigInt (config, "fps", 0);
@@ -325,6 +616,7 @@ DllMain (HMODULE mod, DWORD cause, void *ctx) {
 	}
 	INSTALL_HOOK (EngineUpdate);
 	INSTALL_HOOK (Update2D);
+	INSTALL_HOOK (GiveUp);
 
 	toml_table_t *internalResSection
 		= openConfigSection (config, "internalRes");
