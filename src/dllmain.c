@@ -244,7 +244,7 @@ DrawMenu (int index, const char **items, int items_len) {
 		char buf[32];
 		sprintf (buf, "%s\n", items[i]);
 		drawParam.colour = (i == index ? 0xFF00FFFF : 0xFFFFFFFF);
-		DivaDrawText (&drawParam, 0x1005, buf, 32);
+		DivaDrawText (&drawParam, 0x5, buf, 32);
 	}
 }
 
