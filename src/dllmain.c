@@ -114,7 +114,7 @@ Initialize () {
 	if (DivaWindowHandle == NULL)
 		DivaWindowHandle = FindWindow (0, "GLUT");
 
-	InitializeIO (DivaWindowHandle);
+	InitializeIO ();
 	InitializePoll (DivaWindowHandle);
 
 	/* Enable use_card */
@@ -414,7 +414,7 @@ HOOK (float, __stdcall, GetFrameSpeed, 0x140192D50) {
 
 int32_t internalResX;
 int32_t internalResY;
-bool fullscreen = true;
+bool fullscreen = false;
 
 HOOK (int64_t, __fastcall, ParseParameters, 0x140193630, int32_t a1,
 	  int64_t *a2) {
@@ -593,10 +593,14 @@ DllMain (HMODULE mod, DWORD cause, void *ctx) {
 
 	ApplyPatches ();
 	INSTALL_HOOK (Update);
+	INSTALL_HOOK (EngineUpdate);
+	INSTALL_HOOK (Update2D);
+	INSTALL_HOOK (GiveUp);
+	INSTALL_HOOK (ParseParameters);
 
 	toml_table_t *config = openConfig (configPath ("keyconfig.toml"));
 	if (!config)
-		return 1;
+		goto config;
 
 	SetConfigValue (config, "PAUSE_ENABLE", &PAUSE_ENABLE);
 	SetConfigValue (config, "PAUSE_UP", &PAUSE_UP);
@@ -606,23 +610,22 @@ DllMain (HMODULE mod, DWORD cause, void *ctx) {
 
 	toml_free (config);
 
+config:
 	config = openConfig (configPath ("config.toml"));
 	if (!config)
-		return 1;
+		goto patches;
 	fps = readConfigInt (config, "fps", 0);
 	if (fps > 0) {
 		expectedFrameDuration = 1000 / fps;
 		INSTALL_HOOK (GetFrameSpeed);
 	}
-	INSTALL_HOOK (EngineUpdate);
-	INSTALL_HOOK (Update2D);
-	INSTALL_HOOK (GiveUp);
+	fullscreen = readConfigBool (config, "fullscreen", false);
 
 	toml_table_t *internalResSection
 		= openConfigSection (config, "internalRes");
 	if (!internalResSection) {
 		toml_free (config);
-		return 1;
+		goto patches;
 	}
 
 	internalResX = readConfigInt (internalResSection, "x", 0);
@@ -635,12 +638,10 @@ DllMain (HMODULE mod, DWORD cause, void *ctx) {
 
 		WRITE_MEMORY (0x1409B8B68, int32_t, internalResX, internalResY);
 	}
-	fullscreen = readConfigBool (config, "fullscreen", true);
-	INSTALL_HOOK (ParseParameters);
 
 	toml_free (config);
 
-	/* Load external patches */
+patches:;
 	WIN32_FIND_DATAA fd;
 	HANDLE file = FindFirstFileA (configPath ("patches\\*.toml"), &fd);
 	if (file == 0)

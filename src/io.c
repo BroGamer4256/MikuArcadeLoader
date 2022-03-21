@@ -226,7 +226,14 @@ struct KeyBit keyBits[20] = {
 };
 
 void
-InitializeIO (HWND DivaWindowHandle) {
+InitializeIO () {
+	sliderState = (struct TouchSliderState *)0x14CC5DE40;
+	inputState = (struct InputState *)(*(uint64_t *)(void *)0x140EDA330);
+	currentTouchPanelState = (struct TouchPanelState *)0x14CC9EC30;
+	targetStates = (struct TargetState *)0x140D0B688;
+	dwGuiDisplay = (struct DwGuiDisplay *)*(uint64_t *)0x141190108;
+	camera = (struct Camera *)0x140FBC2C0;
+
 	toml_table_t *config = openConfig (configPath ("keyconfig.toml"));
 	if (!config)
 		return;
@@ -274,13 +281,6 @@ InitializeIO (HWND DivaWindowHandle) {
 		= 65535 * readConfigInt (config, "rumbleIntensity", 25) / 100;
 
 	toml_free (config);
-
-	sliderState = (struct TouchSliderState *)0x14CC5DE40;
-	inputState = (struct InputState *)(*(uint64_t *)(void *)0x140EDA330);
-	currentTouchPanelState = (struct TouchPanelState *)0x14CC9EC30;
-	targetStates = (struct TargetState *)0x140D0B688;
-	dwGuiDisplay = (struct DwGuiDisplay *)*(uint64_t *)0x141190108;
-	camera = (struct Camera *)0x140FBC2C0;
 }
 
 void

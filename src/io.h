@@ -1,4 +1,4 @@
 #include <windows.h>
 
-void InitializeIO (HWND DivaWindowHandle);
+void InitializeIO ();
 void UpdateIO (HWND DivaWindowHandle);
