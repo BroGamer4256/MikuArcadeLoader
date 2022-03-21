@@ -179,6 +179,9 @@ struct Keybindings RIGHT_LEFT
 struct Keybindings RIGHT_RIGHT
 	= { .keycodes = { 'O' }, .axis = { SDL_AXIS_RIGHT_RIGHT } };
 
+struct Keybindings SEL_UP = { .scroll = { MOUSE_SCROLL_UP } };
+struct Keybindings SEL_DOWN = { .scroll = { MOUSE_SCROLL_DOWN } };
+
 struct Keybindings CAMERA_UNLOCK_TOGGLE
 	= { .keycodes = { VK_F3 }, .buttons = { SDL_CONTROLLER_BUTTON_BACK } };
 struct Keybindings CAMERA_MOVE_FORWARD
@@ -256,6 +259,9 @@ InitializeIO () {
 	SetConfigValue (config, "RIGHT_LEFT", &RIGHT_LEFT);
 	SetConfigValue (config, "RIGHT_RIGHT", &RIGHT_RIGHT);
 
+	SetConfigValue (config, "SEL_UP", &SEL_UP);
+	SetConfigValue (config, "SEL_DOWN", &SEL_DOWN);
+
 	SetConfigValue (config, "CAMERA_UNLOCK_TOGGLE", &CAMERA_UNLOCK_TOGGLE);
 	SetConfigValue (config, "CAMERA_MOVE_FORWARD", &CAMERA_MOVE_FORWARD);
 	SetConfigValue (config, "CAMERA_MOVE_BACKWARD", &CAMERA_MOVE_BACKWARD);
@@ -325,13 +331,13 @@ UpdateIO (HWND DivaWindowHandle) {
 		int pvSlotsConst = *(int *)0x14CC119C8;
 		int moduleIsReccomended = *(int *)0x1418047E0;
 
-		if (GetMouseScrollUp ()) {
+		if (IsButtonDown (SEL_UP)) {
 			if (pvSlotsConst < 26)
 				*slotsToScroll -= 1;
 			if (moduleIsReccomended == 0)
 				*modulesToScroll -= 1;
 		}
-		if (GetMouseScrollDown ()) {
+		if (IsButtonDown (SEL_DOWN)) {
 			if (pvSlotsConst < 26)
 				*slotsToScroll += 1;
 			if (moduleIsReccomended == 0)

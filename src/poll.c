@@ -106,6 +106,14 @@ struct {
 	{ "SDL_RTRIGGER", SDL_AXIS_RTRIGGER_DOWN },
 };
 
+struct {
+	const char *string;
+	enum Scroll scroll;
+} ConfigMouseScroll[] = {
+	{ "SCROLL_UP", MOUSE_SCROLL_UP },
+	{ "SCROLL_DOWN", MOUSE_SCROLL_DOWN },
+};
+
 struct MouseState {
 	POINT Position;
 	POINT RelativePosition;
@@ -164,6 +172,13 @@ SetConfigValue (toml_table_t *table, char *key, struct Keybindings *keybind) {
 			for (int i = 0; i < COUNTOFARR (keybind->axis); i++) {
 				if (keybind->axis[i] == 0) {
 					keybind->axis[i] = value.axis;
+					break;
+				}
+			}
+		case scroll:
+			for (int i = 0; i < COUNTOFARR (keybind->scroll); i++) {
+				if (keybind->scroll[i] == 0) {
+					keybind->scroll[i] = value.scroll;
 					break;
 				}
 			}
@@ -402,6 +417,12 @@ StringToConfigEnum (char *value) {
 			rval.axis = ConfigControllerAXIS[i].axis;
 			return rval;
 		}
+	for (int i = 0; i < COUNTOFARR (ConfigMouseScroll); ++i)
+		if (!strcmp (value, ConfigMouseScroll[i].string)) {
+			rval.type = scroll;
+			rval.scroll = ConfigMouseScroll[i].scroll;
+			return rval;
+		}
 
 	printf ("Error at StringToConfigEnum (%s): Unknown value\n", value);
 	return rval;
@@ -439,6 +460,16 @@ GetInternalButtonState (struct Keybindings bindings) {
 		if (ControllerAxisIsDown (bindings.axis[i]))
 			buttons.Down = 1;
 		if (ControllerAxisIsTapped (bindings.axis[i]))
+			buttons.Tapped = 1;
+	}
+	for (int i = 0; i < COUNTOFARR (ConfigMouseScroll); i++) {
+		if (bindings.scroll[i] == 0)
+			continue;
+		if (GetMouseScrollIsReleased (bindings.scroll[i]))
+			buttons.Released = 1;
+		if (GetMouseScrollIsDown (bindings.scroll[i]))
+			buttons.Down = 1;
+		if (GetMouseScrollIsTapped (bindings.scroll[i]))
 			buttons.Tapped = 1;
 	}
 
@@ -518,6 +549,40 @@ GetMouseScrollUp () {
 inline bool
 GetMouseScrollDown () {
 	return currentMouseState.ScrolledDown;
+}
+
+inline bool
+GetWasMouseScrollUp () {
+	return lastMouseState.ScrolledUp;
+}
+
+inline bool
+GetWasMouseScrollDown () {
+	return lastMouseState.ScrolledDown;
+}
+
+inline bool
+GetMouseScrollIsReleased (enum Scroll scroll) {
+	if (scroll == MOUSE_SCROLL_UP)
+		return !GetMouseScrollUp () && GetWasMouseScrollUp ();
+	else
+		return !GetMouseScrollDown () && GetWasMouseScrollDown ();
+}
+
+inline bool
+GetMouseScrollIsDown (enum Scroll scroll) {
+	if (scroll == MOUSE_SCROLL_UP)
+		return GetMouseScrollUp ();
+	else
+		return GetMouseScrollDown ();
+}
+
+inline bool
+GetMouseScrollIsTapped (enum Scroll scroll) {
+	if (scroll == MOUSE_SCROLL_UP)
+		return GetMouseScrollUp () && !GetWasMouseScrollUp ();
+	else
+		return GetMouseScrollDown () && !GetWasMouseScrollDown ();
 }
 
 inline bool

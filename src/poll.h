@@ -30,19 +30,23 @@ struct SDLAxisState {
 	unsigned int RTriggerDown : 1;
 };
 
+enum Scroll { MOUSE_SCROLL_INVALID, MOUSE_SCROLL_UP, MOUSE_SCROLL_DOWN };
+
 struct Keybindings {
 	BYTE keycodes[255];
 	SDL_GameControllerButton buttons[255];
 	enum SDLAxis axis[255];
+	enum Scroll scroll[2];
 };
 
-enum EnumType { none, keycode, button, axis };
+enum EnumType { none, keycode, button, axis, scroll };
 
 struct ConfigValue {
 	enum EnumType type;
 	BYTE keycode;
 	SDL_GameControllerButton button;
 	enum SDLAxis axis;
+	enum Scroll scroll;
 };
 
 struct InternalButtonState {
@@ -75,6 +79,11 @@ POINT GetLastMouseRelativePosition ();
 void SetMousePosition (POINT new);
 bool GetMouseScrollUp ();
 bool GetMouseScrollDown ();
+bool GetWasMouseScrollUp ();
+bool GetWasMouseScrollDown ();
+bool GetMouseScrollIsReleased (enum Scroll scroll);
+bool GetMouseScrollIsDown (enum Scroll scroll);
+bool GetMouseScrollIsTapped (enum Scroll scroll);
 bool ControllerButtonIsDown (SDL_GameControllerButton button);
 bool ControllerButtonIsUp (SDL_GameControllerButton button);
 bool ControllerButtonWasDown (SDL_GameControllerButton button);
