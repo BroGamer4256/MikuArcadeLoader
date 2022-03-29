@@ -220,7 +220,7 @@ FUNCTION_PTR (void, __stdcall, FillRectangle, 0x140198D80,
 			  struct DrawParams *drawParam, const struct Rectangle *rect);
 
 void
-DrawMenu (int index, const char **items, int items_len) {
+DrawFullscreenMenu (int index, const char **items, int items_len) {
 	struct FontInfo fontInfo;
 	fontInfo = *GetFontInfoFromID (&fontInfo, 0x11);
 
@@ -351,17 +351,31 @@ DrawPauseMenu () {
 		return;
 	}
 
-	DrawMenu (pauseIndex, PauseMenuItems, 3);
+	DrawFullscreenMenu (pauseIndex, PauseMenuItems, 3);
 }
 
 const char *DataTestNames[] = {
-	"MAIN TEST",	 "MISC TEST",	   "OBJECT TEST",	"STAGE TEST",
-	"MOTION TEST",	 "COLLISION TEST", "SPRITE TEST",	"2DAUTH TEST",
-	"3DAUTH TEST",	 "CHARA TEST",	   "ITEM TEST",		"PERFORMANCE TEST",
-	"PVSCRIPT TEST", "PRINT TEST",	   "CARD TEST",		"OPD TEST",
-	"SLIDER TEST",	 "GLITTER TEST",   "GRAPHICS TEST", "COLLECTION CARD TEST",
+	"MISC TEST",
+	"OBJECT TEST",
+	"STAGE TEST",
+	"MOTION TEST",
+	"COLLISION TEST",
+	"SPRITE TEST",
+	"2DAUTH TEST",
+	"3DAUTH TEST",
+	"CHARA TEST",
+	"ITEM TEST",
+	"PERFORMANCE TEST",
+	"PVSCRIPT TEST",
+	"PRINT TEST",
+	"CARD TEST",
+	"OPD TEST",
+	"SLIDER TEST",
+	"GLITTER TEST",
+	"GRAPHICS TEST",
+	"COLLECTION CARD TEST",
 };
-int dataTestIndex = 20;
+int dataTestIndex = 21;
 FUNCTION_PTR (void, __stdcall, ChangeSubState, 0x140195260, uint32_t gameState,
 			  uint32_t subState);
 
@@ -376,15 +390,15 @@ DrawTestMenu () {
 		dataTestIndex++;
 
 	if (dataTestIndex > 39)
-		dataTestIndex = 20;
-	if (dataTestIndex < 20)
+		dataTestIndex = 21;
+	if (dataTestIndex < 21)
 		dataTestIndex = 39;
 
 	if (IsButtonTapped (PAUSE_SELECT)) {
 		ChangeSubState (3, dataTestIndex - 1);
 	}
 
-	DrawMenu (dataTestIndex - 20, DataTestNames, 20);
+	DrawFullscreenMenu (dataTestIndex - 21, DataTestNames, 19);
 }
 
 HOOK (void, __cdecl, Update2D, 0x0140501F70, void *a1) {

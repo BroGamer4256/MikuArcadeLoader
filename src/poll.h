@@ -1,5 +1,7 @@
-#include "helpers.h"
 #include <SDL.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <toml.h>
 #include <windows.h>
 
 enum SDLAxis {
@@ -33,7 +35,7 @@ struct SDLAxisState {
 enum Scroll { MOUSE_SCROLL_INVALID, MOUSE_SCROLL_UP, MOUSE_SCROLL_DOWN };
 
 struct Keybindings {
-	BYTE keycodes[255];
+	uint8_t keycodes[255];
 	SDL_GameControllerButton buttons[255];
 	enum SDLAxis axis[255];
 	enum Scroll scroll[2];
@@ -43,7 +45,7 @@ enum EnumType { none, keycode, button, axis, scroll };
 
 struct ConfigValue {
 	enum EnumType type;
-	BYTE keycode;
+	uint8_t keycode;
 	SDL_GameControllerButton button;
 	enum SDLAxis axis;
 	enum Scroll scroll;
@@ -55,8 +57,8 @@ struct InternalButtonState {
 	unsigned int Tapped : 1;
 };
 
-void InitializePoll (HWND DivaWindowHandle);
-void UpdatePoll (HWND DivaWindowHandle);
+void InitializePoll (void *DivaWindowHandle);
+void UpdatePoll (void *DivaWindowHandle);
 void DisposePoll ();
 
 struct ConfigValue StringToConfigEnum (char *value);
@@ -66,12 +68,12 @@ struct InternalButtonState
 GetInternalButtonState (struct Keybindings bindings);
 void SetRumble (int left, int right);
 
-bool KeyboardIsDown (BYTE keycode);
-bool KeyboardIsUp (BYTE keycode);
-bool KeyboardIsTapped (BYTE keycode);
-bool KeyboardIsReleased (BYTE keycode);
-bool KeyboardWasDown (BYTE keycode);
-bool KeyboardWasUp (BYTE keycode);
+bool KeyboardIsDown (uint8_t keycode);
+bool KeyboardIsUp (uint8_t keycode);
+bool KeyboardIsTapped (uint8_t keycode);
+bool KeyboardIsReleased (uint8_t keycode);
+bool KeyboardWasDown (uint8_t keycode);
+bool KeyboardWasUp (uint8_t keycode);
 POINT GetMousePosition ();
 POINT GetLastMousePosition ();
 POINT GetMouseRelativePosition ();
