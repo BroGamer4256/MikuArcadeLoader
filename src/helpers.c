@@ -15,7 +15,7 @@ toml_table_t *
 openConfig (char *configFilePath) {
 	FILE *file = fopen (configFilePath, "r");
 	if (!file) {
-		printf ("Error at openConfig (%s): cannot open file\n",
+		printf ("Error at %s (%s): cannot open file\n", __func__,
 				configFilePath);
 		return 0;
 	}
@@ -24,7 +24,7 @@ openConfig (char *configFilePath) {
 	fclose (file);
 
 	if (!config) {
-		printf ("Error at openConfig (%s): %s\n", configFilePath, errorbuf);
+		printf ("Error at %s (%s): %s\n", __func__, configFilePath, errorbuf);
 		return 0;
 	}
 
@@ -35,7 +35,7 @@ toml_table_t *
 openConfigSection (toml_table_t *config, char *sectionName) {
 	toml_table_t *section = toml_table_in (config, sectionName);
 	if (!section) {
-		printf ("Error at openConfigSection (%s): cannot find section\n",
+		printf ("Error at %s (%s): cannot find section\n", __func__,
 				sectionName);
 		return 0;
 	}

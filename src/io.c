@@ -11,6 +11,10 @@
 bool unlockedCamera = false;
 bool HasWindowFocus = false;
 int rumbleIntensity = 8000;
+const float slideLeftMin = 0.0f;
+const float slideLeftMax = 0.5f;
+const float slideRightMin = 0.5f;
+const float slideRightMax = 1.0f;
 
 struct ContactPoint {
 	float Position;
@@ -384,14 +388,8 @@ UpdateTouch () {
 		= (float)(currentTouchPanelState->ContactType != 0);
 }
 
-float sliderIncrement = 16.6f / 750.0f;
-float sensorStep = (1.0f / 32);
-
 void
 SetSensor (int index, int value) {
-	if (index < 0 || index >= 32)
-		return;
-
 	sliderState->SensorPressureLevels[index] = value;
 	sliderState->SensorTouched[index].IsTouched = value > 0;
 }
@@ -400,19 +398,15 @@ void
 ApplyContactPoint (struct ContactPoint contactPoint, int section) {
 	sliderState->SectionTouched[section] = contactPoint.InContact;
 
-	float position = contactPoint.Position;
-	if (position > 1.0f)
-		position = 1.0f;
-	else if (position < 0.0f)
-		position = 0.0f;
-
-	if (contactPoint.InContact) {
-		int sensor = (int)(position * (32 - 1));
-		SetSensor (sensor, contactPoint.InContact ? 180 : 0);
-	}
+	if (contactPoint.InContact && contactPoint.Position != slideLeftMin
+		&& contactPoint.Position != slideLeftMax
+		&& contactPoint.Position != slideRightMin
+		&& contactPoint.Position != slideRightMax)
+		SetSensor (contactPoint.Position * 31, 180);
 
 	sliderState->SectionPositions[section]
-		= contactPoint.InContact ? -1.0f + (position * 2.0f) : 0.0f;
+		= contactPoint.InContact ? -1.0f + (contactPoint.Position * 2.0f)
+								 : 0.0f;
 }
 
 void
@@ -423,19 +417,16 @@ EmulateSliderInput (struct Keybindings left, struct Keybindings right,
 	bool rightDown = IsButtonDown (right);
 
 	if (leftDown)
-		contactPoint->Position -= sliderIncrement;
+		contactPoint->Position -= 0.02f;
 	else if (rightDown)
-		contactPoint->Position += sliderIncrement;
+		contactPoint->Position += 0.02f;
 
 	if (contactPoint->Position < start)
 		contactPoint->Position = end;
 	if (contactPoint->Position > end)
 		contactPoint->Position = start;
 
-	bool leftTapped = IsButtonTapped (left);
-	bool rightTapped = IsButtonTapped (right);
-
-	if (leftTapped || rightTapped)
+	if (IsButtonTapped (left) || IsButtonTapped (right))
 		contactPoint->Position = (start + end) / 2.0f;
 
 	contactPoint->InContact = leftDown || rightDown;
@@ -499,9 +490,10 @@ UpdateInput () {
 	if ((lastInputState &= inputState->Tapped.Buttons) != 0)
 		inputState->Down.Buttons ^= inputState->Tapped.Buttons;
 
-	EmulateSliderInput (LEFT_LEFT, LEFT_RIGHT, &ContactPoints[0], 0.0f, 0.5f);
+	EmulateSliderInput (LEFT_LEFT, LEFT_RIGHT, &ContactPoints[0], slideLeftMin,
+						slideLeftMax);
 	EmulateSliderInput (RIGHT_LEFT, RIGHT_RIGHT, &ContactPoints[1],
-						0.5f + sensorStep, 1.0f + sensorStep);
+						slideRightMin, slideRightMax);
 
 	for (int i = 0; i < 32; i++)
 		SetSensor (i, 0);

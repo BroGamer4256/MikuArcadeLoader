@@ -150,16 +150,10 @@ Initialize () {
 	WRITE_MEMORY (0x14053CAb2, uint8_t, 0xF3, 0x0F, 0x10, 0x05, 0xFA, 0x53,
 				  0x46, 0x00, 0xE9, 0x42, 0xFE, 0xFF, 0xFF);
 	/* This can be removed if you dont care about ageage module hair */
-	WRITE_MEMORY (0x14054352F, uint8_t, 0x49, 0xB9,
-				  (uint8_t)((uint64_t)&fspeed_last_result & 0xFF),
-				  (uint8_t)(((uint64_t)&fspeed_last_result >> 8) & 0xFF),
-				  (uint8_t)(((uint64_t)&fspeed_last_result >> 16) & 0xFF),
-				  (uint8_t)(((uint64_t)&fspeed_last_result >> 24) & 0xFF),
-				  (uint8_t)(((uint64_t)&fspeed_last_result >> 32) & 0xFF),
-				  (uint8_t)(((uint64_t)&fspeed_last_result >> 40) & 0xFF),
-				  (uint8_t)(((uint64_t)&fspeed_last_result >> 48) & 0xFF),
-				  (uint8_t)(((uint64_t)&fspeed_last_result >> 56) & 0xFF),
-				  0xF3, 0x41, 0x0F, 0x59, 0x19, 0xEB, 0xB0);
+	WRITE_MEMORY (0x14054352F, uint8_t, 0x49, 0xB9);
+	WRITE_MEMORY (0x140543531, uint64_t, (uint64_t)&fspeed_last_result);
+	WRITE_MEMORY (0x140543539, uint8_t, 0xF3, 0x41, 0x0F, 0x59, 0x19, 0xEB,
+				  0xB0);
 }
 
 HOOK (void, __cdecl, Update, 0x14018CC40) {

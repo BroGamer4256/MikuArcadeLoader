@@ -100,7 +100,7 @@ void
 SetConfigValue (toml_table_t *table, char *key, struct Keybindings *keybind) {
 	toml_array_t *array = toml_array_in (table, key);
 	if (!array) {
-		printf ("Error at SetConfigValue (%s): Cannot find array\n", key);
+		printf ("Error at %s (%s): Cannot find array\n", __func__, key);
 		return;
 	}
 
@@ -173,8 +173,9 @@ InitializePoll (void *DivaWindowHandle) {
 	if (SDL_GameControllerAddMappingsFromFile (
 			configPath ("gamecontrollerdb.txt"))
 		== -1)
-		printf ("Error at InitializePoll (): Cannot read "
-				"plugins/gamecontrollerdb.txt\n");
+		printf ("Error at %s (): Cannot read "
+				"plugins/gamecontrollerdb.txt\n",
+				__func__);
 	SDL_GameControllerEventState (SDL_ENABLE);
 
 	for (int i = 0; i < SDL_NumJoysticks (); i++) {
@@ -260,8 +261,9 @@ UpdatePoll (void *DivaWindowHandle) {
 				= SDL_GameControllerOpen (event.cdevice.which);
 
 			if (!controller) {
-				printf ("Error at PollSDLInput (): Could not open "
+				printf ("Error at %s (): Could not open "
 						"gamecontroller %s: %s\n",
+						__func__,
 						SDL_GameControllerNameForIndex (event.cdevice.which),
 						SDL_GetError ());
 				continue;
@@ -388,7 +390,7 @@ StringToConfigEnum (char *value) {
 			return rval;
 		}
 
-	printf ("Error at StringToConfigEnum (%s): Unknown value\n", value);
+	printf ("Error at %s (%s): Unknown value\n", __func__, value);
 	return rval;
 }
 
