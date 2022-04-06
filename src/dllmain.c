@@ -114,8 +114,8 @@ Initialize () {
 	if (DivaWindowHandle == NULL)
 		DivaWindowHandle = FindWindow (0, "GLUT");
 
-	InitializeIO ();
-	InitializePoll (DivaWindowHandle);
+	bool hasRumble = InitializePoll (DivaWindowHandle);
+	InitializeIO (hasRumble);
 
 	/* Enable use_card */
 	WRITE_MEMORY (0x1411A8850, uint8_t, 0x01);

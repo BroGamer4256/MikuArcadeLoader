@@ -57,7 +57,7 @@ struct InternalButtonState {
 	unsigned int Tapped : 1;
 };
 
-void InitializePoll (void *DivaWindowHandle);
+bool InitializePoll (void *DivaWindowHandle);
 void UpdatePoll (void *DivaWindowHandle);
 void DisposePoll ();
 

@@ -233,7 +233,7 @@ struct KeyBit keyBits[20] = {
 };
 
 void
-InitializeIO () {
+InitializeIO (bool hasRumble) {
 	sliderState = (struct TouchSliderState *)0x14CC5DE40;
 	inputState = (struct InputState *)(*(uint64_t *)(void *)0x140EDA330);
 	currentTouchPanelState = (struct TouchPanelState *)0x14CC9EC30;
@@ -288,7 +288,9 @@ InitializeIO () {
 		return;
 
 	rumbleIntensity
-		= 65535 * readConfigInt (config, "rumbleIntensity", 25) / 100;
+		= hasRumble
+			  ? 65535 * readConfigInt (config, "rumbleIntensity", 25) / 100
+			  : 0;
 
 	toml_free (config);
 }

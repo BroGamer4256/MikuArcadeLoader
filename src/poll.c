@@ -153,8 +153,9 @@ SetConfigValue (toml_table_t *table, char *key, struct Keybindings *keybind) {
 	}
 }
 
-void
+bool
 InitializePoll (void *DivaWindowHandle) {
+	bool hasRumble = true;
 	SDL_SetMainReady ();
 
 	SDL_SetHint (SDL_HINT_JOYSTICK_HIDAPI_PS4, "1");
@@ -164,11 +165,20 @@ InitializePoll (void *DivaWindowHandle) {
 
 	if (SDL_Init (SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMECONTROLLER
 				  | SDL_INIT_EVENTS | SDL_INIT_VIDEO)
-		!= 0)
-		printf ("Error at SDL_Init (SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | "
+		!= 0) {
+		if (SDL_Init (SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER
+					  | SDL_INIT_EVENTS | SDL_INIT_VIDEO)
+			== 0) {
+			hasRumble = false;
+		} else {
+			printf (
+				"Error at SDL_Init (SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | "
 				"SDL_INIT_GAMECONTROLLER | SDL_INIT_EVENTS | SDL_INIT_VIDEO): "
 				"%s\n",
 				SDL_GetError ());
+			return false;
+		}
+	}
 
 	if (SDL_GameControllerAddMappingsFromFile (
 			configPath ("gamecontrollerdb.txt"))
@@ -200,6 +210,8 @@ InitializePoll (void *DivaWindowHandle) {
 	else
 		printf ("Error at SDL_CreateWindowFrom (DivaWindowHandle): %s\n",
 				SDL_GetError ());
+
+	return hasRumble;
 }
 
 void
