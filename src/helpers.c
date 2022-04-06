@@ -15,8 +15,7 @@ toml_table_t *
 openConfig (char *configFilePath) {
 	FILE *file = fopen (configFilePath, "r");
 	if (!file) {
-		printf ("Error at %s (%s): cannot open file\n", __func__,
-				configFilePath);
+		printWarning ("%s (%s): cannot open file\n", __func__, configFilePath);
 		return 0;
 	}
 	char errorbuf[200];
@@ -24,7 +23,7 @@ openConfig (char *configFilePath) {
 	fclose (file);
 
 	if (!config) {
-		printf ("Error at %s (%s): %s\n", __func__, configFilePath, errorbuf);
+		printWarning ("%s (%s): %s\n", __func__, configFilePath, errorbuf);
 		return 0;
 	}
 
@@ -35,8 +34,7 @@ toml_table_t *
 openConfigSection (toml_table_t *config, char *sectionName) {
 	toml_table_t *section = toml_table_in (config, sectionName);
 	if (!section) {
-		printf ("Error at %s (%s): cannot find section\n", __func__,
-				sectionName);
+		printWarning ("%s (%s): cannot find section\n", __func__, sectionName);
 		return 0;
 	}
 
@@ -68,4 +66,20 @@ readConfigString (toml_table_t *table, char *key, char *notFoundValue) {
 		return notFoundValue;
 
 	return data.u.s;
+}
+
+void
+printColour (int colour, const char *format, ...) {
+	va_list args;
+	va_start (args, format);
+
+	void *console = GetStdHandle (STD_OUTPUT_HANDLE);
+	char buffer[255];
+	SetConsoleTextAttribute (console, colour);
+	vsprintf (buffer, format, args);
+	printf (buffer);
+	SetConsoleTextAttribute (console, FOREGROUND_BLUE | FOREGROUND_GREEN
+										  | FOREGROUND_RED);
+
+	va_end (args);
 }

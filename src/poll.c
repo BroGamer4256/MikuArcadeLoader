@@ -25,6 +25,7 @@ struct {
 	{ "UPARROW", 0x26 },	{ "LEFTARROW", 0x25 }, { "DOWNARROW", 0x28 },
 	{ "RIGHTARROW", 0x27 }, { "ENTER", 0x0D },	   { "SPACE", 0x20 },
 	{ "CONTROL", 0x11 },	{ "SHIFT", 0x10 },	   { "TAB", 0x09 },
+	{ "ESCAPE", 0x1B },
 };
 
 struct {
@@ -100,7 +101,7 @@ void
 SetConfigValue (toml_table_t *table, char *key, struct Keybindings *keybind) {
 	toml_array_t *array = toml_array_in (table, key);
 	if (!array) {
-		printf ("Error at %s (%s): Cannot find array\n", __func__, key);
+		printWarning ("%s (%s): Cannot find array\n", __func__, key);
 		return;
 	}
 
@@ -171,8 +172,9 @@ InitializePoll (void *DivaWindowHandle) {
 			== 0) {
 			hasRumble = false;
 		} else {
-			printf (
-				"Error at SDL_Init (SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | "
+			printError (
+
+				"SDL_Init (SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | "
 				"SDL_INIT_GAMECONTROLLER | SDL_INIT_EVENTS | SDL_INIT_VIDEO): "
 				"%s\n",
 				SDL_GetError ());
@@ -183,9 +185,9 @@ InitializePoll (void *DivaWindowHandle) {
 	if (SDL_GameControllerAddMappingsFromFile (
 			configPath ("gamecontrollerdb.txt"))
 		== -1)
-		printf ("Error at %s (): Cannot read "
-				"plugins/gamecontrollerdb.txt\n",
-				__func__);
+		printError ("%s (): Cannot read "
+					"plugins/gamecontrollerdb.txt\n",
+					__func__);
 	SDL_GameControllerEventState (SDL_ENABLE);
 
 	for (int i = 0; i < SDL_NumJoysticks (); i++) {
@@ -195,8 +197,8 @@ InitializePoll (void *DivaWindowHandle) {
 		SDL_GameController *controller = SDL_GameControllerOpen (i);
 
 		if (!controller) {
-			printf ("Could not open gamecontroller %s: %s\n",
-					SDL_GameControllerNameForIndex (i), SDL_GetError ());
+			printWarning ("Could not open gamecontroller %s: %s\n",
+						  SDL_GameControllerNameForIndex (i), SDL_GetError ());
 			continue;
 		}
 
@@ -208,8 +210,8 @@ InitializePoll (void *DivaWindowHandle) {
 	if (window != NULL)
 		SDL_SetWindowResizable (window, true);
 	else
-		printf ("Error at SDL_CreateWindowFrom (DivaWindowHandle): %s\n",
-				SDL_GetError ());
+		printError ("SDL_CreateWindowFrom (DivaWindowHandle): %s\n",
+					SDL_GetError ());
 
 	return hasRumble;
 }
@@ -273,11 +275,13 @@ UpdatePoll (void *DivaWindowHandle) {
 				= SDL_GameControllerOpen (event.cdevice.which);
 
 			if (!controller) {
-				printf ("Error at %s (): Could not open "
-						"gamecontroller %s: %s\n",
-						__func__,
-						SDL_GameControllerNameForIndex (event.cdevice.which),
-						SDL_GetError ());
+				printError (
+
+					"%s (): Could not open "
+					"gamecontroller %s: %s\n",
+					__func__,
+					SDL_GameControllerNameForIndex (event.cdevice.which),
+					SDL_GetError ());
 				continue;
 			}
 
@@ -402,7 +406,7 @@ StringToConfigEnum (char *value) {
 			return rval;
 		}
 
-	printf ("Error at %s (%s): Unknown value\n", __func__, value);
+	printError ("%s (%s): Unknown value\n", __func__, value);
 	return rval;
 }
 

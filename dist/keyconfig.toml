@@ -6,6 +6,7 @@ DATA_TEST = [ "F6" ]
 TEST_MODE = [ "F7" ]
 APP_ERROR = [ "F8" ]
 
+EXIT = [ "ESCAPE" ]
 START = [ "ENTER", "SDL_START" ]
 TRIANGLE = [ "W", "I", "SDL_Y", "SDL_DPAD_UP" ]
 SQUARE = [ "A", "J", "SDL_X", "SDL_DPAD_LEFT" ]

@@ -87,6 +87,8 @@ float fspeed_last_result = 0;
 bool isPaused = false;
 bool giveUp = false;
 
+struct Keybindings EXIT = { .keycodes = { VK_ESCAPE } };
+
 struct Keybindings PAUSE_ENABLE
 	= { .keycodes = { VK_RETURN },
 		.buttons = { SDL_CONTROLLER_BUTTON_START } };
@@ -163,7 +165,7 @@ HOOK (void, __cdecl, Update, 0x14018CC40) {
 	UpdatePoll (DivaWindowHandle);
 
 	/* Exit */
-	if (KeyboardIsDown (VK_ESCAPE))
+	if (IsButtonTapped (EXIT))
 		*(bool *)0x140EDA6B0 = true;
 
 	if (*(uint32_t *)0x140EDA82C == 13 && !isPaused)
@@ -609,6 +611,8 @@ DllMain (HMODULE mod, DWORD cause, void *ctx) {
 	toml_table_t *config = openConfig (configPath ("keyconfig.toml"));
 	if (!config)
 		goto config;
+
+	SetConfigValue (config, "EXIT", &EXIT);
 
 	SetConfigValue (config, "PAUSE_ENABLE", &PAUSE_ENABLE);
 	SetConfigValue (config, "PAUSE_UP", &PAUSE_UP);
