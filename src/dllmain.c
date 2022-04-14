@@ -609,51 +609,41 @@ DllMain (HMODULE mod, DWORD cause, void *ctx) {
 	INSTALL_HOOK (ParseParameters);
 
 	toml_table_t *config = openConfig (configPath ("keyconfig.toml"));
-	if (!config)
-		goto config;
+	if (config) {
+		SetConfigValue (config, "EXIT", &EXIT);
 
-	SetConfigValue (config, "EXIT", &EXIT);
+		SetConfigValue (config, "PAUSE_ENABLE", &PAUSE_ENABLE);
+		SetConfigValue (config, "PAUSE_UP", &PAUSE_UP);
+		SetConfigValue (config, "PAUSE_DOWN", &PAUSE_DOWN);
+		SetConfigValue (config, "PAUSE_SELECT", &PAUSE_SELECT);
+		SetConfigValue (config, "PAUSE_HIDE", &PAUSE_HIDE);
 
-	SetConfigValue (config, "PAUSE_ENABLE", &PAUSE_ENABLE);
-	SetConfigValue (config, "PAUSE_UP", &PAUSE_UP);
-	SetConfigValue (config, "PAUSE_DOWN", &PAUSE_DOWN);
-	SetConfigValue (config, "PAUSE_SELECT", &PAUSE_SELECT);
-	SetConfigValue (config, "PAUSE_HIDE", &PAUSE_HIDE);
-
-	toml_free (config);
-
-config:
-	config = openConfig (configPath ("config.toml"));
-	if (!config)
-		goto patches;
-	fps = readConfigInt (config, "fps", 0);
-	if (fps > 0) {
-		expectedFrameDuration = 1000 / fps;
-		INSTALL_HOOK (GetFrameSpeed);
-	}
-	fullscreen = readConfigBool (config, "fullscreen", false);
-
-	toml_table_t *internalResSection
-		= openConfigSection (config, "internalRes");
-	if (!internalResSection) {
 		toml_free (config);
-		goto patches;
 	}
 
-	internalResX = readConfigInt (internalResSection, "x", 0);
-	internalResY = readConfigInt (internalResSection, "y", 0);
-	if (internalResX != 0 && internalResY != 0) {
-		if (internalResX == -1 || internalResY == -1) {
-			internalResX = GetSystemMetrics (SM_CXSCREEN);
-			internalResY = GetSystemMetrics (SM_CYSCREEN);
+	config = openConfig (configPath ("config.toml"));
+	if (config) {
+		fps = readConfigInt (config, "fps", 0);
+		if (fps > 0) {
+			expectedFrameDuration = 1000 / fps;
+			INSTALL_HOOK (GetFrameSpeed);
 		}
-
-		WRITE_MEMORY (0x1409B8B68, int32_t, internalResX, internalResY);
+		fullscreen = readConfigBool (config, "fullscreen", false);
+		toml_table_t *internalResSection = openConfigSection (config, "internalRes");
+		if (internalResSection) {
+			internalResX = readConfigInt (internalResSection, "x", 0);
+			internalResY = readConfigInt (internalResSection, "y", 0);
+			if (internalResX != 0 && internalResY != 0) {
+				if (internalResX == -1 || internalResY == -1) {
+					internalResX = GetSystemMetrics (SM_CXSCREEN);
+					internalResY = GetSystemMetrics (SM_CYSCREEN);
+				}
+				WRITE_MEMORY (0x1409B8B68, int32_t, internalResX, internalResY);
+			}
+		}
+		toml_free (config);
 	}
-
-	toml_free (config);
-
-patches:;
+	
 	WIN32_FIND_DATAA fd;
 	HANDLE file = FindFirstFileA (configPath ("patches\\*.toml"), &fd);
 	if (file == 0)
@@ -686,10 +676,6 @@ patches:;
 			toml_datum_t data_type = toml_string_in (patch, "data_type");
 			if (!data_type.ok)
 				continue;
-
-			/* Switch dosent work for char* BTW
-			 This was as boring for me to write as it will be for you
-			 to read */
 
 			if (strcmp (data_type.u.s, "string") == 0)
 				WRITE_MEMORY_CONFIG_STRING (address, patch)

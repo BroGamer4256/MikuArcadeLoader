@@ -1,6 +1,8 @@
 #include "helpers.h"
 #include <windows.h>
 
+void *consoleHandle = 0;
+
 char *
 configPath (char *name) {
 	static char buffer[MAX_PATH];
@@ -73,12 +75,14 @@ printColour (int colour, const char *format, ...) {
 	va_list args;
 	va_start (args, format);
 
-	void *console = GetStdHandle (STD_OUTPUT_HANDLE);
+	if (consoleHandle == 0)
+		consoleHandle = GetStdHandle (STD_OUTPUT_HANDLE);
+
 	char buffer[255];
-	SetConsoleTextAttribute (console, colour);
 	vsprintf (buffer, format, args);
+	SetConsoleTextAttribute (consoleHandle, colour);
 	printf (buffer);
-	SetConsoleTextAttribute (console, FOREGROUND_BLUE | FOREGROUND_GREEN
+	SetConsoleTextAttribute (consoleHandle, FOREGROUND_BLUE | FOREGROUND_GREEN
 										  | FOREGROUND_RED);
 
 	va_end (args);
