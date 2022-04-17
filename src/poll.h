@@ -58,7 +58,8 @@ struct InternalButtonState {
 };
 
 bool InitializePoll (void *DivaWindowHandle);
-void UpdatePoll (void *DivaWindowHandle);
+void UpdatePoll (void *DivaWindowHandle,
+				 void (*convertMouseToRelative) (POINT *, RECT));
 void DisposePoll ();
 
 struct ConfigValue StringToConfigEnum (char *value);

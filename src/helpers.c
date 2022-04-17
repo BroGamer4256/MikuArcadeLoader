@@ -83,7 +83,7 @@ printColour (int colour, const char *format, ...) {
 	SetConsoleTextAttribute (consoleHandle, colour);
 	printf (buffer);
 	SetConsoleTextAttribute (consoleHandle, FOREGROUND_BLUE | FOREGROUND_GREEN
-										  | FOREGROUND_RED);
+												| FOREGROUND_RED);
 
 	va_end (args);
 }

@@ -5,31 +5,31 @@
 #include <windows.h>
 
 struct RawFont {
-	uint32_t sprId;
-	uint8_t width1;
-	uint8_t height1;
-	uint8_t width2;
-	uint8_t height2;
-	uint8_t layoutParam2Num;
-	uint8_t layoutParam2Div;
-	uint8_t padding0a[0x02];
-	int32_t fontmapId;
+	u32 sprId;
+	u8 width1;
+	u8 height1;
+	u8 width2;
+	u8 height2;
+	u8 layoutParam2Num;
+	u8 layoutParam2Div;
+	u8 padding0a[0x02];
+	i32 fontmapId;
 	float layoutParam2NumOverDiv;
-	uint8_t padding14[0x04];
-	uint64_t texWidthChars;
-	int64_t dataBegin;
-	int64_t dataEnd;
-	int64_t dataCapacityEnd;
-	uint8_t layoutParam1;
-	uint8_t padding39[0x7];
+	u8 padding14[0x04];
+	u64 texWidthChars;
+	u64 dataBegin;
+	u64 dataEnd;
+	u64 dataCapacityEnd;
+	u8 layoutParam1;
+	u8 padding39[0x7];
 };
 
 struct FontInfo {
-	uint32_t fontId;
-	uint8_t padding04[0x4];
+	u32 fontId;
+	u8 padding04[0x4];
 	struct RawFont *rawfont;
-	uint16_t flag10;
-	uint8_t padding12[0x02];
+	u16 flag10;
+	u8 padding12[0x02];
 	float width1;
 	float height1;
 	float width2;
@@ -43,26 +43,26 @@ struct FontInfo {
 };
 
 struct DrawParams {
-	uint32_t colour;
-	uint32_t fillColour;
-	uint8_t clip;
-	uint8_t unk09[0x3];
+	u32 colour;
+	u32 fillColour;
+	u8 clip;
+	u8 unk09[0x3];
 	float clipRectX;
 	float clipRectY;
 	float clipRectWidth;
 	float clipRectHeight;
-	uint32_t layer;
-	uint32_t unk20;
-	uint32_t unk24;
-	uint32_t unk28;
+	u32 layer;
+	u32 unk20;
+	u32 unk24;
+	u32 unk28;
 	float textCurrentLocX;
 	float textCurrentLocY;
 	float lineOriginLocX;
 	float lineOriginLocY;
-	uint8_t padding3c[0x4];
-	uint64_t lineLength;
+	u8 padding3c[0x4];
+	u64 lineLength;
 	struct FontInfo *font;
-	uint16_t unk50;
+	u16 unk50;
 };
 
 struct Rectangle {
@@ -120,13 +120,13 @@ Initialize () {
 	InitializeIO (hasRumble);
 
 	/* Enable use_card */
-	WRITE_MEMORY (0x1411A8850, uint8_t, 0x01);
+	WRITE_MEMORY (0x1411A8850, u8, 0x01);
 	/* Enable modifiers */
-	WRITE_MEMORY (0x1411A9685, uint8_t, 0x01);
+	WRITE_MEMORY (0x1411A9685, u8, 0x01);
 	/* Allow selecting modules and items */
-	WRITE_MEMORY (0x1405869AD, uint8_t, 0xB0, 0x01);
-	WRITE_MEMORY (0x140583B45, uint8_t, 0x85);
-	WRITE_MEMORY (0x140583C8C, uint8_t, 0x85);
+	WRITE_MEMORY (0x1405869AD, u8, 0xB0, 0x01);
+	WRITE_MEMORY (0x140583B45, u8, 0x85);
+	WRITE_MEMORY (0x140583C8C, u8, 0x85);
 	/* Unlock all modules and items */
 	memset ((void *)0x1411A8990, 0xFF, 128);
 	memset ((void *)0x1411A8B08, 0xFF, 128);
@@ -137,32 +137,55 @@ Initialize () {
 	VirtualProtect ((void *)0x1409A0A58, sizeof (float),
 					PAGE_EXECUTE_READWRITE, 0);
 	WRITE_NOP (0x140192D7B, 3);
-	WRITE_MEMORY (0x140338F2F, uint8_t, 0xF3, 0x0F, 0x10, 0x0D, 0x61, 0x18,
-				  0xBA, 0x00, 0x48, 0x8B, 0x8F, 0x80, 0x01, 0x00, 0x00);
-	WRITE_MEMORY (0x140338EBE, uint8_t, 0xF3, 0x0F, 0x10, 0x0D, 0xD2, 0x18,
-				  0xBA, 0x00, 0x48, 0x8B, 0x05, 0xFB, 0xB1, 0xE5, 0x00, 0x48,
-				  0x8B, 0x88, 0x80, 0x01, 0x00, 0x00);
-	WRITE_MEMORY (0x140170394, uint8_t, 0xF3, 0x0F, 0x5E, 0x05, 0x34, 0xA3,
-				  0xD6, 0x00);
-	WRITE_MEMORY (0x140192D30, uint8_t, 0xF3, 0x0F, 0x10, 0x05, 0x5C, 0x02,
-				  0x00, 0x00);
-	WRITE_MEMORY (0x14053C901, uint8_t, 0xF3, 0x0F, 0x5E, 0x05, 0xC7, 0xDD,
-				  0x99, 0x00, 0xE9, 0x68, 0x01, 0x00, 0x00);
-	WRITE_MEMORY (0x14053CA71, uint8_t, 0xEB, 0x3F);
-	WRITE_MEMORY (0x14053CAb2, uint8_t, 0xF3, 0x0F, 0x10, 0x05, 0xFA, 0x53,
-				  0x46, 0x00, 0xE9, 0x42, 0xFE, 0xFF, 0xFF);
+	WRITE_MEMORY (0x140338F2F, u8, 0xF3, 0x0F, 0x10, 0x0D, 0x61, 0x18, 0xBA,
+				  0x00, 0x48, 0x8B, 0x8F, 0x80, 0x01, 0x00, 0x00);
+	WRITE_MEMORY (0x140338EBE, u8, 0xF3, 0x0F, 0x10, 0x0D, 0xD2, 0x18, 0xBA,
+				  0x00, 0x48, 0x8B, 0x05, 0xFB, 0xB1, 0xE5, 0x00, 0x48, 0x8B,
+				  0x88, 0x80, 0x01, 0x00, 0x00);
+	WRITE_MEMORY (0x140170394, u8, 0xF3, 0x0F, 0x5E, 0x05, 0x34, 0xA3, 0xD6,
+				  0x00);
+	WRITE_MEMORY (0x140192D30, u8, 0xF3, 0x0F, 0x10, 0x05, 0x5C, 0x02, 0x00,
+				  0x00);
+	WRITE_MEMORY (0x14053C901, u8, 0xF3, 0x0F, 0x5E, 0x05, 0xC7, 0xDD, 0x99,
+				  0x00, 0xE9, 0x68, 0x01, 0x00, 0x00);
+	WRITE_MEMORY (0x14053CA71, u8, 0xEB, 0x3F);
+	WRITE_MEMORY (0x14053CAb2, u8, 0xF3, 0x0F, 0x10, 0x05, 0xFA, 0x53, 0x46,
+				  0x00, 0xE9, 0x42, 0xFE, 0xFF, 0xFF);
 	/* This can be removed if you dont care about ageage module hair */
-	WRITE_MEMORY (0x14054352F, uint8_t, 0x49, 0xB9);
+	WRITE_MEMORY (0x14054352F, u8, 0x49, 0xB9);
 	WRITE_MEMORY (0x140543531, uint64_t, (uint64_t)&fspeed_last_result);
-	WRITE_MEMORY (0x140543539, uint8_t, 0xF3, 0x41, 0x0F, 0x59, 0x19, 0xEB,
-				  0xB0);
+	WRITE_MEMORY (0x140543539, u8, 0xF3, 0x41, 0x0F, 0x59, 0x19, 0xEB, 0xB0);
+}
+
+void
+ConvertMouseToRelative (POINT *position, RECT window) {
+	int *gameWidth = (int *)0x140EDA8BC;
+	int *gameHeight = (int *)0x140EDA8C0;
+	int *fbWidth = (int *)0x1411ABCA8;
+	int *fbHeight = (int *)0x1411ABCAC;
+
+	if ((fbWidth != gameWidth) && (fbHeight != gameHeight)) {
+		float scale;
+		float xoffset = (16.0f / 9.0f) * window.bottom;
+		if (xoffset != window.right) {
+			scale = xoffset / window.right;
+			xoffset = (window.right / 2) - (xoffset / 2);
+		} else {
+			xoffset = 0;
+			scale = 1;
+		}
+
+		position->x
+			= ((position->x - xoffset) * *gameWidth / window.right) / scale;
+		position->y = position->y * *gameHeight / window.bottom;
+	}
 }
 
 HOOK (void, __cdecl, Update, 0x14018CC40) {
 	if (FirstUpdate)
 		Initialize ();
 
-	UpdatePoll (DivaWindowHandle);
+	UpdatePoll (DivaWindowHandle, ConvertMouseToRelative);
 
 	/* Exit */
 	if (IsButtonTapped (EXIT))
@@ -256,9 +279,9 @@ const char *PauseMenuItems[] = { "RESUME", "RESTART", "GIVE UP" };
 bool firstPauseFrame = true;
 bool hidePauseMenu = false;
 int pauseIndex = 0;
-uint8_t aetMoveOriginal[8];
-uint8_t framespeedOriginal[4];
-uint8_t ageageHairOriginal[3];
+u8 aetMoveOriginal[8];
+u8 framespeedOriginal[4];
+u8 ageageHairOriginal[3];
 bool playstates[8];
 
 FUNCTION_PTR (void, __stdcall, PauseDSC, 0x1401295C0);
@@ -291,8 +314,8 @@ DrawPauseMenu () {
 		memcpy (&framespeedOriginal, (void *)0x140192D50, 4);
 		memcpy (&ageageHairOriginal, (void *)0x14054352C, 3);
 		WRITE_NOP (0x1401703B3, 8);
-		WRITE_MEMORY (0x140192D50, uint8_t, 0x0F, 0x57, 0xC0, 0xC3);
-		WRITE_MEMORY (0x14054352C, uint8_t, 0x0F, 0x57, 0xDB);
+		WRITE_MEMORY (0x140192D50, u8, 0x0F, 0x57, 0xC0, 0xC3);
+		WRITE_MEMORY (0x14054352C, u8, 0x0F, 0x57, 0xDB);
 
 		uint64_t audioMixer = *(uint64_t *)0x14CC61190;
 		uint64_t audioStreams = *(uint64_t *)(audioMixer + 0x18);
@@ -311,11 +334,11 @@ DrawPauseMenu () {
 
 		UnPauseDSC ();
 		for (int i = 0; i < 8; i++)
-			WRITE_MEMORY (0x1401703B3 + i, uint8_t, aetMoveOriginal[i]);
+			WRITE_MEMORY (0x1401703B3 + i, u8, aetMoveOriginal[i]);
 		for (int i = 0; i < 4; i++)
-			WRITE_MEMORY (0x140192D50 + i, uint8_t, framespeedOriginal[i]);
+			WRITE_MEMORY (0x140192D50 + i, u8, framespeedOriginal[i]);
 		for (int i = 0; i < 3; i++)
-			WRITE_MEMORY (0x14054352C + i, uint8_t, ageageHairOriginal[i]);
+			WRITE_MEMORY (0x14054352C + i, u8, ageageHairOriginal[i]);
 
 		uint64_t audioMixer = *(uint64_t *)0x14CC61190;
 		uint64_t audioStreams = *(uint64_t *)(audioMixer + 0x18);
@@ -329,20 +352,20 @@ DrawPauseMenu () {
 		if (pauseIndex != 1)
 			return;
 
-		WRITE_MEMORY (0x1401038CD, uint8_t, 0x15);
-		WRITE_MEMORY (0x140103B94, uint8_t, 0x18);
-		*(uint8_t *)0x140D0B512 = 0;
-		*(uint8_t *)0x140D0B524 = 8;
+		WRITE_MEMORY (0x1401038CD, u8, 0x15);
+		WRITE_MEMORY (0x140103B94, u8, 0x18);
+		*(u8 *)0x140D0B512 = 0;
+		*(u8 *)0x140D0B524 = 8;
 		*(int32_t *)0x140CDD8D8 = 0x11;
 		while (*(int32_t *)0x140CDD8D8 < 0x18)
 			LoadPV (0x140CDD8D0);
 		*(int32_t *)0x140D0A9BC = 0;
 		*(int32_t *)0x140D0A9B8 = 0;
 		*(int32_t *)0x140D0A9C0 = 0;
-		*(uint8_t *)0x140D0A50C = 0;
+		*(u8 *)0x140D0A50C = 0;
 		*(int32_t *)0x140D0AA0F = 0;
-		WRITE_MEMORY (0x1401038CD, uint8_t, 0x12);
-		WRITE_MEMORY (0x140103B94, uint8_t, 0x16);
+		WRITE_MEMORY (0x1401038CD, u8, 0x12);
+		WRITE_MEMORY (0x140103B94, u8, 0x16);
 
 		return;
 	}
@@ -473,31 +496,31 @@ UpdateScale (HWND DivaWindowHandle) {
 void
 ApplyPatches () {
 	/* Just completely ignore all SYSTEM_STARTUP errors */
-	WRITE_MEMORY (0x1403F5080, uint8_t, 0xC3);
+	WRITE_MEMORY (0x1403F5080, u8, 0xC3);
 	/* Always exit TASK_MODE_APP_ERROR on the first frame */
 	WRITE_NOP (0x1403F73A7, 2);
-	WRITE_MEMORY (0x1403F73C3, uint8_t, 0x89, 0xD1, 0x90);
+	WRITE_MEMORY (0x1403F73C3, u8, 0x89, 0xD1, 0x90);
 	/* Clear framebuffer at all resolutions */
 	WRITE_NOP (0x140501480, 2);
 	WRITE_NOP (0x140501515, 2);
 	/* Write ram files to ram/ instead of Y:/SBZV/ram/ */
-	WRITE_MEMORY (0x14066CF09, uint8_t, 0xE9, 0xD8, 0x00);
+	WRITE_MEMORY (0x14066CF09, u8, 0xE9, 0xD8, 0x00);
 	/* Change mdata path from "C:/Mount/Option" to "mdata/" */
-	WRITE_MEMORY (0x140A8CA18, uint8_t, "mdata/");
+	WRITE_MEMORY (0x140A8CA18, u8, "mdata/");
 	/* Length of string at 0x140A8CA18 */
-	WRITE_MEMORY (0x14066CEAE, uint8_t, 0x06);
+	WRITE_MEMORY (0x14066CEAE, u8, 0x06);
 	/* Skip parts of the network check state */
-	WRITE_MEMORY (0x1406717B1, uint8_t, 0xE9, 0x22, 0x03, 0x00);
+	WRITE_MEMORY (0x1406717B1, u8, 0xE9, 0x22, 0x03, 0x00);
 	/* Set the initial DHCP WAIT timer value to 0 */
 	WRITE_NULL (0x1406724E7, 2);
 	/* Ignore SYSTEM_STARTUP Location Server checks */
 	WRITE_NOP (0x1406732A2, 2);
 	/* Toon Shader Fix by lybxlpsv */
 	WRITE_NOP (0x14050214F, 2);
-	WRITE_MEMORY (0x140641102, uint8_t, 0x01);
+	WRITE_MEMORY (0x140641102, u8, 0x01);
 	/* Skip keychip checks */
-	WRITE_MEMORY (0x140210820, uint8_t, 0xB8, 0x00, 0x00, 0x00, 0x00, 0xC3);
-	WRITE_MEMORY (0x14066E820, uint8_t, 0xB8, 0x01, 0x00, 0x00, 0x00, 0xC3);
+	WRITE_MEMORY (0x140210820, u8, 0xB8, 0x00, 0x00, 0x00, 0x00, 0xC3);
+	WRITE_MEMORY (0x14066E820, u8, 0xB8, 0x01, 0x00, 0x00, 0x00, 0xC3);
 	/* Disable glutFitWindowSizeToDesktop */
 	WRITE_NOP (0x140194E06, 5);
 	/* Enable Modifiers */
@@ -506,28 +529,27 @@ ApplyPatches () {
 	WRITE_NOP (0x1405CB14A, 6);
 	WRITE_NOP (0x140136CFA, 6);
 	/* Enable modselector without use_card */
-	WRITE_MEMORY (0x1405C513B, uint8_t, 0x01);
+	WRITE_MEMORY (0x1405C513B, u8, 0x01);
 	/* Fix back button */
-	WRITE_MEMORY (0x140578FB8, uint8_t, 0xE9, 0x73, 0xFF, 0xFF, 0xFF);
+	WRITE_MEMORY (0x140578FB8, u8, 0xE9, 0x73, 0xFF, 0xFF, 0xFF);
 	/* Hide Keychip ID */
 	WRITE_NULL (0x1409A5918, 14);
 	WRITE_NULL (0x1409A5928, 14);
 	/* Fix TouchReaction */
-	WRITE_MEMORY (0x1406A1F81, uint8_t, 0x0F, 0x59, 0xC1, 0x0F, 0x5E, 0xC2,
-				  0x66, 0x0F, 0xD6, 0x44, 0x24, 0x10, 0xEB, 0x06, 0xCC, 0xEB,
-				  0x67);
-	WRITE_MEMORY (0x1406A1FE2, uint8_t, 0x7E);
-	WRITE_MEMORY (0x1406A1FE9, uint8_t, 0x66, 0x0F, 0xD6, 0x44, 0x24, 0x6C,
-				  0xC7, 0x44, 0x24, 0x74, 0x00, 0x00, 0x00, 0x00, 0xEB, 0x0E,
-				  0x66, 0x48, 0x0F, 0x6E, 0xC2, 0xEB, 0x5D);
-	WRITE_MEMORY (0x1406A205D, uint8_t, 0x0F, 0x2A, 0x0D, 0xB8, 0x6A, 0x31,
-				  0x00, 0x0F, 0x12, 0x51, 0x1C, 0xE9, 0x14, 0xFF, 0xFF, 0xFF);
+	WRITE_MEMORY (0x1406A1F81, u8, 0x0F, 0x59, 0xC1, 0x0F, 0x5E, 0xC2, 0x66,
+				  0x0F, 0xD6, 0x44, 0x24, 0x10, 0xEB, 0x06, 0xCC, 0xEB, 0x67);
+	WRITE_MEMORY (0x1406A1FE2, u8, 0x7E);
+	WRITE_MEMORY (0x1406A1FE9, u8, 0x66, 0x0F, 0xD6, 0x44, 0x24, 0x6C, 0xC7,
+				  0x44, 0x24, 0x74, 0x00, 0x00, 0x00, 0x00, 0xEB, 0x0E, 0x66,
+				  0x48, 0x0F, 0x6E, 0xC2, 0xEB, 0x5D);
+	WRITE_MEMORY (0x1406A205D, u8, 0x0F, 0x2A, 0x0D, 0xB8, 0x6A, 0x31, 0x00,
+				  0x0F, 0x12, 0x51, 0x1C, 0xE9, 0x14, 0xFF, 0xFF, 0xFF);
 	/* Enable "FREE PLAY" mode */
-	WRITE_MEMORY (0x140393610, uint8_t, 0xB0, 0x01, 0xC3, 0x90, 0x90, 0x90);
-	WRITE_MEMORY (0x1403BABEA, uint8_t, 0x75);
+	WRITE_MEMORY (0x140393610, u8, 0xB0, 0x01, 0xC3, 0x90, 0x90, 0x90);
+	WRITE_MEMORY (0x1403BABEA, u8, 0x75);
 	/* Show Cursor */
-	WRITE_MEMORY (0x14019341B, uint8_t, 0x00);
-	WRITE_MEMORY (0x1403012B5, uint8_t, 0xEB);
+	WRITE_MEMORY (0x14019341B, u8, 0x00);
+	WRITE_MEMORY (0x1403012B5, u8, 0xEB);
 	/* Disable Motion Blur */
 	WRITE_NULL (0x1411AB67C, 1);
 	WRITE_NOP (0x1404AB11D, 3);
@@ -545,22 +567,20 @@ ApplyPatches () {
 	WRITE_NULL (0x140A217B0, 1);
 	/* Skip slider update */
 	WRITE_NOP (0x14061579B, 3);
-	WRITE_MEMORY (0x14061579E, uint8_t, 0x8B, 0x42, 0xE0);
+	WRITE_MEMORY (0x14061579E, u8, 0x8B, 0x42, 0xE0);
 	WRITE_NOP (0x1406157A1, 3);
 	/* Prevent DATA_TEST crash */
 	WRITE_NULL (0x140284B01, 1);
 	/* Enable dw_gui */
 	WRITE_NULL (0x140192601, 1);
-	WRITE_MEMORY (0x140302600, uint8_t, 0xB0, 0x01);
-	WRITE_MEMORY (0x140302610, uint8_t, 0xB0, 0x01);
-	WRITE_MEMORY (0x140192D00, uint8_t, 0xB8, 0x01, 0x00, 0x00, 0x00, 0xC3);
+	WRITE_MEMORY (0x140302600, u8, 0xB0, 0x01);
+	WRITE_MEMORY (0x140302610, u8, 0xB0, 0x01);
+	WRITE_MEMORY (0x140192D00, u8, 0xB8, 0x01, 0x00, 0x00, 0x00, 0xC3);
 	/* Prevent resetting playerdata */
-	WRITE_MEMORY (0x1404A7370, uint8_t, 0xC3);
+	WRITE_MEMORY (0x1404A7370, u8, 0xC3);
 	/* Enable Scaling */
-	WRITE_MEMORY (0x1404ACD24, uint8_t, 0x44, 0x8B, 0x0D, 0xD1, 0x08, 0xD0,
-				  0x00);
-	WRITE_MEMORY (0x1404ACD2B, uint8_t, 0x44, 0x8B, 0x05, 0xC6, 0x08, 0xD0,
-				  0x00);
+	WRITE_MEMORY (0x1404ACD24, u8, 0x44, 0x8B, 0x0D, 0xD1, 0x08, 0xD0, 0x00);
+	WRITE_MEMORY (0x1404ACD2B, u8, 0x44, 0x8B, 0x05, 0xC6, 0x08, 0xD0, 0x00);
 	WRITE_NOP (0x1405030A0, 6);
 	/* Prevent DATA_TEST from exiting */
 	WRITE_NULL (0x140284B01, 1);
@@ -629,7 +649,8 @@ DllMain (HMODULE mod, DWORD cause, void *ctx) {
 			INSTALL_HOOK (GetFrameSpeed);
 		}
 		fullscreen = readConfigBool (config, "fullscreen", false);
-		toml_table_t *internalResSection = openConfigSection (config, "internalRes");
+		toml_table_t *internalResSection
+			= openConfigSection (config, "internalRes");
 		if (internalResSection) {
 			internalResX = readConfigInt (internalResSection, "x", 0);
 			internalResY = readConfigInt (internalResSection, "y", 0);
@@ -638,12 +659,13 @@ DllMain (HMODULE mod, DWORD cause, void *ctx) {
 					internalResX = GetSystemMetrics (SM_CXSCREEN);
 					internalResY = GetSystemMetrics (SM_CYSCREEN);
 				}
-				WRITE_MEMORY (0x1409B8B68, int32_t, internalResX, internalResY);
+				WRITE_MEMORY (0x1409B8B68, int32_t, internalResX,
+							  internalResY);
 			}
 		}
 		toml_free (config);
 	}
-	
+
 	WIN32_FIND_DATAA fd;
 	HANDLE file = FindFirstFileA (configPath ("patches\\*.toml"), &fd);
 	if (file == 0)
@@ -680,33 +702,33 @@ DllMain (HMODULE mod, DWORD cause, void *ctx) {
 			if (strcmp (data_type.u.s, "string") == 0)
 				WRITE_MEMORY_CONFIG_STRING (address, patch)
 			else if (strcmp (data_type.u.s, "i8") == 0)
-				WRITE_MEMORY_CONFIG_INT (address, patch, int8_t)
+				WRITE_MEMORY_CONFIG_INT (address, patch, i8)
 			else if (strcmp (data_type.u.s, "i16") == 0)
-				WRITE_MEMORY_CONFIG_INT (address, patch, int16_t)
+				WRITE_MEMORY_CONFIG_INT (address, patch, i16)
 			else if (strcmp (data_type.u.s, "i32") == 0)
-				WRITE_MEMORY_CONFIG_INT (address, patch, int32_t)
+				WRITE_MEMORY_CONFIG_INT (address, patch, i32)
 			else if (strcmp (data_type.u.s, "i64") == 0)
-				WRITE_MEMORY_CONFIG_INT (address, patch, int64_t)
+				WRITE_MEMORY_CONFIG_INT (address, patch, i64)
 			else if (strcmp (data_type.u.s, "u8") == 0)
-				WRITE_MEMORY_CONFIG_INT (address, patch, uint8_t)
+				WRITE_MEMORY_CONFIG_INT (address, patch, u8)
 			else if (strcmp (data_type.u.s, "u16") == 0)
-				WRITE_MEMORY_CONFIG_INT (address, patch, uint16_t)
+				WRITE_MEMORY_CONFIG_INT (address, patch, u16)
 			else if (strcmp (data_type.u.s, "u32") == 0)
-				WRITE_MEMORY_CONFIG_INT (address, patch, uint32_t)
+				WRITE_MEMORY_CONFIG_INT (address, patch, u32)
 			else if (strcmp (data_type.u.s, "i8_arr") == 0)
-				WRITE_MEMORY_CONFIG_INT_ARR (address, patch, int8_t)
+				WRITE_MEMORY_CONFIG_INT_ARR (address, patch, i8)
 			else if (strcmp (data_type.u.s, "i16_arr") == 0)
-				WRITE_MEMORY_CONFIG_INT_ARR (address, patch, int16_t)
+				WRITE_MEMORY_CONFIG_INT_ARR (address, patch, i16)
 			else if (strcmp (data_type.u.s, "i32_arr") == 0)
-				WRITE_MEMORY_CONFIG_INT_ARR (address, patch, int32_t)
+				WRITE_MEMORY_CONFIG_INT_ARR (address, patch, i32)
 			else if (strcmp (data_type.u.s, "i64_arr") == 0)
-				WRITE_MEMORY_CONFIG_INT_ARR (address, patch, int64_t)
+				WRITE_MEMORY_CONFIG_INT_ARR (address, patch, i64)
 			else if (strcmp (data_type.u.s, "u8_arr") == 0)
-				WRITE_MEMORY_CONFIG_INT_ARR (address, patch, uint8_t)
+				WRITE_MEMORY_CONFIG_INT_ARR (address, patch, u8)
 			else if (strcmp (data_type.u.s, "u16_arr") == 0)
-				WRITE_MEMORY_CONFIG_INT_ARR (address, patch, uint16_t)
+				WRITE_MEMORY_CONFIG_INT_ARR (address, patch, i16)
 			else if (strcmp (data_type.u.s, "u32_arr") == 0)
-				WRITE_MEMORY_CONFIG_INT_ARR (address, patch, uint32_t)
+				WRITE_MEMORY_CONFIG_INT_ARR (address, patch, u32)
 
 			free (data_type.u.s);
 		}

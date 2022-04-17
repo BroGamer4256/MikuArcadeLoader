@@ -20,6 +20,40 @@ options:
 	@echo "LDFLAGS	= ${LDFLAGS}"
 	@echo "CC	= ${CC}"
 
+.PHONY: dist
+dist: options ${OUT}
+	git clone https://github.com/gabomdq/SDL_GameControllerDB --recursive
+	git clone https://github.com/BroGamer4256/dinput8 --recursive
+	mkdir PDL && cd PDL && wget https://github.com/PDModdingCommunity/PD-Loader/releases/download/2.6.5a-r4n/PD-Loader-2.6.5a-r4.zip
+
+	mkdir -p out/plugins/patches/
+	mkdir -p "out/plugins/Novidia Shaders"
+	cd dinput8 && make TARGET=${TARGET}
+	cd PDL && unzip PD-Loader-2.6.5a-r4.zip
+	
+	cp PDL/plugins/bassasio.dll \
+		PDL/plugins/ShaderPatch.ini \
+		dist/keyconfig.toml \
+		dist/config.toml \
+		${TARGET}/MAL.dll \
+		SDL_GameControllerDB/gamecontrollerdb.txt \
+	out/plugins
+	cp dist/patches/example.toml \
+		dist/patches/osage.toml \
+		dist/patches/good_dwgui_size.toml \
+		dist/patches/disable_movies.toml \
+	out/plugins/patches
+	cp dinput8/${TARGET}/dinput8.dll out/
+
+	cp PDL/plugins/DivaSound.dva out/plugins/DivaSound.dll
+	cp PDL/plugins/DivaSound_template.bin out/plugins/DivaSound.ini
+	cp PDL/plugins/Novidia.dva out/plugins/Novidia.dll
+	cp "PDL/plugins/Novidia Shaders/e6d9187b.vcdiff" "out/plugins/Novidia Shaders/e6d9187b.vcdiff"
+	cp PDL/plugins/ShaderPatch.dva out/plugins/ShaderPatch.dll
+	cp PDL/plugins/ShaderPatchConfig_template.bin out/plugins/ShaderPatchConfig.ini
+
+	cd out && zip ../dist.zip * plugins/* plugins/patches/* plugins/Novidia\ Shaders/*
+	rm -rf PDL SDL_GameControllerDB dinput8
 
 ${TARGET}/%.o: %.c
 	@echo BUILD $@
@@ -27,9 +61,12 @@ ${TARGET}/%.o: %.c
 
 .PHONY: ${OUT}
 ${OUT}: ${DEPS} ${OBJ}
-	@cd src && clang-format -i *.h *.c -style=file
 	@echo LINK $@
 	@${CC} ${CFLAGS} -o ${TARGET}/$@.dll ${OBJ} ${LDFLAGS} ${LIBS}
+
+.PHONY: fmt
+fmt:
+	@cd src && clang-format -i *.h *.c -style=file
 
 .PHONY: clean
 clean:

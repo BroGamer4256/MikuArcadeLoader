@@ -217,7 +217,8 @@ InitializePoll (void *DivaWindowHandle) {
 }
 
 void
-UpdatePoll (void *DivaWindowHandle) {
+UpdatePoll (void *DivaWindowHandle,
+			void (*convertMouseToRelative) (POINT *, RECT)) {
 	if (DivaWindowHandle == NULL || GetForegroundWindow () != DivaWindowHandle)
 		return;
 
@@ -238,31 +239,7 @@ UpdatePoll (void *DivaWindowHandle) {
 
 	RECT hWindow;
 	GetClientRect (DivaWindowHandle, &hWindow);
-
-	int *gameWidth = (int *)0x140EDA8BC;
-	int *gameHeight = (int *)0x140EDA8C0;
-	int *fbWidth = (int *)0x1411ABCA8;
-	int *fbHeight = (int *)0x1411ABCAC;
-
-	if ((fbWidth != gameWidth) && (fbHeight != gameHeight)) {
-		float scale;
-		float xoffset = (16.0f / 9.0f) * hWindow.bottom;
-		if (xoffset != hWindow.right) {
-			scale = xoffset / hWindow.right;
-			xoffset = (hWindow.right / 2) - (xoffset / 2);
-		} else {
-			xoffset = 0;
-			scale = 1;
-		}
-
-		currentMouseState.RelativePosition.x
-			= ((currentMouseState.RelativePosition.x - xoffset) * *gameWidth
-			   / hWindow.right)
-			  / scale;
-		currentMouseState.RelativePosition.y
-			= currentMouseState.RelativePosition.y * *gameHeight
-			  / hWindow.bottom;
-	}
+	convertMouseToRelative (&currentMouseState.RelativePosition, hWindow);
 
 	SDL_Event event;
 	while (SDL_PollEvent (&event) != 0) {

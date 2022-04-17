@@ -22,31 +22,31 @@ struct ContactPoint {
 } ContactPoints[2];
 
 struct TouchSliderState {
-	uint8_t Padding0000[112];
+	u8 Padding0000[112];
 
-	int32_t State;
+	i32 State;
 
-	uint8_t Padding0074[20 + 12];
+	u8 Padding0074[20 + 12];
 
-	int32_t SensorPressureLevels[32];
+	i32 SensorPressureLevels[32];
 
-	uint8_t Padding0108[52 - 12];
+	u8 Padding0108[52 - 12];
 
 	float SectionPositions[4];
-	int SectionConnections[4];
-	uint8_t Padding015C[4];
+	i32 SectionConnections[4];
+	u8 Padding015C[4];
 	bool SectionTouched[4];
 
-	uint8_t Padding013C[3128 - 52 - 40];
+	u8 Padding013C[3128 - 52 - 40];
 
 	struct {
-		uint8_t Padding00[2];
+		u8 Padding00[2];
 		bool IsTouched;
-		uint8_t Padding[45];
+		u8 Padding[45];
 	} SensorTouched[32];
 } * sliderState;
 
-enum JvsButtons : uint32_t {
+enum JvsButtons : u32 {
 	JVS_NONE = 0 << 0x00,
 
 	JVS_TEST = 1 << 0x00,
@@ -66,7 +66,7 @@ enum JvsButtons : uint32_t {
 
 union ButtonState {
 	enum JvsButtons Buttons;
-	uint32_t State[4];
+	u32 State[4];
 };
 
 struct InputState {
@@ -74,45 +74,45 @@ struct InputState {
 	union ButtonState Released;
 
 	union ButtonState Down;
-	uint32_t Padding_20[4];
+	u32 Padding_20[4];
 
 	union ButtonState DoubleTapped;
-	uint32_t Padding_30[4];
+	u32 Padding_30[4];
 
 	union ButtonState IntervalTapped;
-	uint32_t Padding_38[12];
+	u32 Padding_38[12];
 
-	int32_t MouseX;
-	int32_t MouseY;
-	int32_t MouseDeltaX;
-	int32_t MouseDeltaY;
+	i32 MouseX;
+	i32 MouseY;
+	i32 MouseDeltaX;
+	i32 MouseDeltaY;
 
-	uint32_t Padding_AC[8];
-	uint8_t Padding_D0[3];
+	i32 Padding_AC[8];
+	u8 Padding_D0[3];
 	char Key;
 } * inputState;
 
 struct TouchPanelState {
-	int32_t Padding00[0x1E];
-	int32_t ConnectionState;
-	int32_t Padding01[0x06];
+	i32 Padding00[0x1E];
+	i32 ConnectionState;
+	i32 Padding01[0x06];
 	float XPosition;
 	float YPosition;
 	float Pressure;
-	int32_t ContactType;
+	i32 ContactType;
 } * currentTouchPanelState;
 
 struct TargetState {
 	struct TargetState *prev;
 	struct TargetState *next;
-	uint8_t padding10[0x4];
-	int32_t tgtType;
+	u8 padding10[0x4];
+	i32 tgtType;
 	float tgtRemainingTime;
-	uint8_t padding1C[0x434];
-	uint8_t ToBeRemoved;
-	uint8_t padding451[0xB];
-	int32_t tgtHitState;
-	uint8_t padding460[0x48];
+	u8 padding1C[0x434];
+	u8 ToBeRemoved;
+	u8 padding451[0xB];
+	i32 tgtHitState;
+	u8 padding460[0x48];
 } * targetStates;
 
 struct DwGuiDisplay {
@@ -125,8 +125,8 @@ struct DwGuiDisplay {
 } * dwGuiDisplay;
 
 struct KeyBit {
-	uint32_t bit;
-	uint8_t keycode;
+	u32 bit;
+	u8 keycode;
 };
 
 struct Camera {
@@ -235,10 +235,10 @@ struct KeyBit keyBits[20] = {
 void
 InitializeIO (bool hasRumble) {
 	sliderState = (struct TouchSliderState *)0x14CC5DE40;
-	inputState = (struct InputState *)(*(uint64_t *)(void *)0x140EDA330);
+	inputState = (struct InputState *)(*(u64 *)(void *)0x140EDA330);
 	currentTouchPanelState = (struct TouchPanelState *)0x14CC9EC30;
 	targetStates = (struct TargetState *)0x140D0B688;
-	dwGuiDisplay = (struct DwGuiDisplay *)*(uint64_t *)0x141190108;
+	dwGuiDisplay = (struct DwGuiDisplay *)*(u64 *)0x141190108;
 	camera = (struct Camera *)0x140FBC2C0;
 
 	toml_table_t *config = openConfig (configPath ("keyconfig.toml"));
@@ -318,24 +318,24 @@ UpdateIO (HWND DivaWindowHandle) {
 
 		/* Wireframe */
 		if (IsButtonTapped (WIREFRAME)) {
-			if (*(uint8_t *)0x140500BE6 == 0xB9) {
-				WRITE_MEMORY (0x140500BE6, uint8_t, 0xBA, 0x01, 0x1B, 0x00,
-							  0x00, 0xB9, 0x08, 0x04, 0x00, 0x00, 0xE8, 0xE1,
-							  0x5A, 0x3B, 0x00, 0x90, 0x90, 0x90, 0x90, 0x90,
-							  0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90);
+			if (*(u8 *)0x140500BE6 == 0xB9) {
+				WRITE_MEMORY (0x140500BE6, u8, 0xBA, 0x01, 0x1B, 0x00, 0x00,
+							  0xB9, 0x08, 0x04, 0x00, 0x00, 0xE8, 0xE1, 0x5A,
+							  0x3B, 0x00, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90,
+							  0x90, 0x90, 0x90, 0x90, 0x90, 0x90);
 			} else {
-				WRITE_MEMORY (0x140500BE6, uint8_t, 0xB9, 0x1C, 0x00, 0x00,
-							  0x00, 0xE8, 0x30, 0x7C, 0xF3, 0xFF, 0xB9, 0x1B,
-							  0x00, 0x00, 0x00, 0x8B, 0xD8, 0xE8, 0x24, 0x7C,
-							  0xF3, 0xFF, 0xB9, 0x1A, 0x00, 0x00, 0x00);
+				WRITE_MEMORY (0x140500BE6, u8, 0xB9, 0x1C, 0x00, 0x00, 0x00,
+							  0xE8, 0x30, 0x7C, 0xF3, 0xFF, 0xB9, 0x1B, 0x00,
+							  0x00, 0x00, 0x8B, 0xD8, 0xE8, 0x24, 0x7C, 0xF3,
+							  0xFF, 0xB9, 0x1A, 0x00, 0x00, 0x00);
 			}
 		}
 
 		/* Scrolling through menus */
-		int *slotsToScroll = (int *)0x14CC12470;
-		int *modulesToScroll = (int *)0x1418047EC;
-		int pvSlotsConst = *(int *)0x14CC119C8;
-		int moduleIsReccomended = *(int *)0x1418047E0;
+		i32 *slotsToScroll = (i32 *)0x14CC12470;
+		i32 *modulesToScroll = (i32 *)0x1418047EC;
+		i32 pvSlotsConst = *(i32 *)0x14CC119C8;
+		i32 moduleIsReccomended = *(i32 *)0x1418047E0;
 
 		if (IsButtonDown (SEL_UP)) {
 			if (pvSlotsConst < 26)
@@ -463,8 +463,7 @@ GetButtonsState (bool (*buttonTestFunc) (struct Keybindings)) {
 	return buttons;
 }
 
-FUNCTION_PTR (void, __stdcall, ChangeGameState, 0x1401953D0,
-			  uint32_t gameState);
+FUNCTION_PTR (void, __stdcall, ChangeGameState, 0x1401953D0, u32 gameState);
 void
 UpdateInput () {
 	if (IsButtonDown (ADVERTISE))
@@ -530,7 +529,7 @@ UpdateInput () {
 }
 
 inline void
-SetInputStateBit (uint8_t *data, uint8_t bit, bool isPressed) {
+SetInputStateBit (u8 *data, u8 bit, bool isPressed) {
 	data[bit / 8] = isPressed ? data[bit / 8] | 1 << (bit % 8)
 							  : data[bit / 8] & ~(1 << (bit % 8));
 }
@@ -562,53 +561,48 @@ UpdateDwGuiInput () {
 	inputState->Key = keyState;
 
 	for (int i = 0; i < COUNTOFARR (keyBits); i++) {
-		SetInputStateBit ((uint8_t *)&inputState->Tapped, keyBits[i].bit,
+		SetInputStateBit ((u8 *)&inputState->Tapped, keyBits[i].bit,
 						  KeyboardIsTapped (keyBits[i].keycode));
-		SetInputStateBit ((uint8_t *)&inputState->Released, keyBits[i].bit,
+		SetInputStateBit ((u8 *)&inputState->Released, keyBits[i].bit,
 						  KeyboardIsReleased (keyBits[i].keycode));
-		SetInputStateBit ((uint8_t *)&inputState->Down, keyBits[i].bit,
+		SetInputStateBit ((u8 *)&inputState->Down, keyBits[i].bit,
 						  KeyboardIsDown (keyBits[i].keycode));
-		SetInputStateBit ((uint8_t *)&inputState->DoubleTapped, keyBits[i].bit,
+		SetInputStateBit ((u8 *)&inputState->DoubleTapped, keyBits[i].bit,
 						  KeyboardIsTapped (keyBits[i].keycode));
-		SetInputStateBit ((uint8_t *)&inputState->IntervalTapped,
-						  keyBits[i].bit,
+		SetInputStateBit ((u8 *)&inputState->IntervalTapped, keyBits[i].bit,
 						  KeyboardIsTapped (keyBits[i].keycode));
 	}
 
-	SetInputStateBit ((uint8_t *)&inputState->Tapped, 99, GetMouseScrollUp ());
-	SetInputStateBit ((uint8_t *)&inputState->Released, 99,
+	SetInputStateBit ((u8 *)&inputState->Tapped, 99, GetMouseScrollUp ());
+	SetInputStateBit ((u8 *)&inputState->Released, 99, GetMouseScrollUp ());
+	SetInputStateBit ((u8 *)&inputState->Down, 99, GetMouseScrollUp ());
+	SetInputStateBit ((u8 *)&inputState->DoubleTapped, 99,
 					  GetMouseScrollUp ());
-	SetInputStateBit ((uint8_t *)&inputState->Down, 99, GetMouseScrollUp ());
-	SetInputStateBit ((uint8_t *)&inputState->DoubleTapped, 99,
-					  GetMouseScrollUp ());
-	SetInputStateBit ((uint8_t *)&inputState->IntervalTapped, 99,
+	SetInputStateBit ((u8 *)&inputState->IntervalTapped, 99,
 					  GetMouseScrollUp ());
 
-	SetInputStateBit ((uint8_t *)&inputState->Tapped, 100,
+	SetInputStateBit ((u8 *)&inputState->Tapped, 100, GetMouseScrollDown ());
+	SetInputStateBit ((u8 *)&inputState->Released, 100, GetMouseScrollDown ());
+	SetInputStateBit ((u8 *)&inputState->Down, 100, GetMouseScrollDown ());
+	SetInputStateBit ((u8 *)&inputState->DoubleTapped, 100,
 					  GetMouseScrollDown ());
-	SetInputStateBit ((uint8_t *)&inputState->Released, 100,
-					  GetMouseScrollDown ());
-	SetInputStateBit ((uint8_t *)&inputState->Down, 100,
-					  GetMouseScrollDown ());
-	SetInputStateBit ((uint8_t *)&inputState->DoubleTapped, 100,
-					  GetMouseScrollDown ());
-	SetInputStateBit ((uint8_t *)&inputState->IntervalTapped, 100,
+	SetInputStateBit ((u8 *)&inputState->IntervalTapped, 100,
 					  GetMouseScrollDown ());
 }
 
 float verticalRotation;
 float horizontalRotation;
-FUNCTION_PTR (void, __stdcall, GlutSetCursor, 0x1408B68E6, int32_t cursorID);
+FUNCTION_PTR (void, __stdcall, GlutSetCursor, 0x1408B68E6, i32 cursorID);
 void
 UpdateUnlockedCamera (HWND DivaWindowHandle) {
 	if (IsButtonTapped (CAMERA_UNLOCK_TOGGLE)) {
 		unlockedCamera = !unlockedCamera;
 		GlutSetCursor (unlockedCamera ? 0x65 : 0);
 		if (unlockedCamera) {
-			WRITE_MEMORY (0x1401F9460, uint8_t, 0xC3);
-			WRITE_MEMORY (0x1401F93F0, uint8_t, 0xC3);
-			WRITE_MEMORY (0x1401F9480, uint8_t, 0xC3);
-			WRITE_MEMORY (0x1401F9430, uint8_t, 0xC3);
+			WRITE_MEMORY (0x1401F9460, u8, 0xC3);
+			WRITE_MEMORY (0x1401F93F0, u8, 0xC3);
+			WRITE_MEMORY (0x1401F9480, u8, 0xC3);
+			WRITE_MEMORY (0x1401F9430, u8, 0xC3);
 
 			verticalRotation
 				= (float)(atan2 (camera->FocusZ - camera->PositionZ,
@@ -623,10 +617,10 @@ UpdateUnlockedCamera (HWND DivaWindowHandle) {
 			GetClientRect (DivaWindowHandle, &window);
 			SetCursorPos (window.right / 2, window.bottom / 2);
 		} else {
-			WRITE_MEMORY (0x1401F9460, uint8_t, 0x8B);
-			WRITE_MEMORY (0x1401F93F0, uint8_t, 0x8B);
-			WRITE_MEMORY (0x1401F9480, uint8_t, 0xF3);
-			WRITE_MEMORY (0x1401F9430, uint8_t, 0x80);
+			WRITE_MEMORY (0x1401F9460, u8, 0x8B);
+			WRITE_MEMORY (0x1401F93F0, u8, 0x8B);
+			WRITE_MEMORY (0x1401F9480, u8, 0xF3);
+			WRITE_MEMORY (0x1401F9430, u8, 0x80);
 		}
 	}
 
