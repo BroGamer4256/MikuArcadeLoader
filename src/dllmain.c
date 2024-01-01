@@ -420,7 +420,7 @@ DrawTestMenu () {
 	DrawFullscreenMenu (dataTestIndex - 21, DataTestNames, 19);
 }
 
-HOOK (void, __cdecl, Update2D, 0x0140501F70, void *a1) {
+HOOK (void, __cdecl, Update2D, 0x140502CA0, void *a1) {
 	if (fps > 0) {
 		fspeed_error = fspeed_error_next;
 		fspeed_error_next = 0;
